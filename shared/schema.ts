@@ -1,18 +1,43 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const jobPostingSchema = z.object({
+  title: z.string().min(1, "Job title is required"),
+  company: z.string().min(1, "Company name is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  salary: z.number().optional(),
+  requirements: z.string().optional(),
+  contactEmail: z.string().email().optional().or(z.literal("")),
+  companyWebsite: z.string().url().optional().or(z.literal("")),
+  postingDate: z.string().optional(),
+  contactMethod: z.enum(["email", "phone", "text_only", "in_person", "other"]).optional(),
+  responseTime: z.number().optional(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
+export type JobPosting = z.infer<typeof jobPostingSchema>;
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type RedFlagSeverity = "critical" | "high" | "medium" | "low";
+
+export interface RedFlag {
+  severity: RedFlagSeverity;
+  message: string;
+  category: "content" | "company" | "patterns" | "communication";
+}
+
+export interface CategoryAnalysis {
+  score: number;
+  flags: string[];
+}
+
+export interface AnalysisResult {
+  ghostScore: number;
+  confidence: number;
+  recommendation: string;
+  riskLevel: "high" | "medium" | "low-medium" | "low";
+  redFlags: RedFlag[];
+  detailedAnalysis: {
+    contentAnalysis: CategoryAnalysis;
+    companyVerification: CategoryAnalysis;
+    postingPatterns: CategoryAnalysis;
+    communication: CategoryAnalysis;
+  };
+}
