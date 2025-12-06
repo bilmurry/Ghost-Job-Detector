@@ -1,0 +1,558 @@
+class GhostJobDetector:  Python 
+    def __init__(self):
+        self.red_flags = {
+            'critical': 10,  # Immediate rejection
+            'high': 7,       # Very suspicious
+            'medium': 5,     # Questionable
+            'low': 2         # Minor concern
+        }
+        
+    def analyze_job_posting(self, job_data):
+        """Main detection function"""
+        score = 0
+        reasons = []
+        
+        # Critical Red Flags (Score: 10 each)
+        critical_checks = [
+            self.check_payment_requests,
+            self.check_too_good_to_be_true,
+            self.check_missing_company_info,
+            self.check_unprofessional_communication,
+            self.check_immediate_job_offers
+        ]
+        
+        # High Risk Flags (Score: 7 each)
+        high_risk_checks = [
+            self.check_vague_requirements,
+            self.check_unrealistic_salary,
+            self.check_no_interview_process,
+            self.check_personal_email_domains,
+            self.check_repetitive_postings
+        ]
+        
+        # Run all checks
+        for check in critical_checks + high_risk_checks:
+            result, reason = check(job_data)
+            if result:
+                score += self.red_flags['critical' if check in critical_checks else 'high']
+                reasons.append(reason)
+        
+        return self.generate_report(score, reasons, job_data)
+
+
+———————————————- 
+
+
+Automated Tool Detection: Python 
+
+# Complete implementation
+import re
+import requests
+from datetime import datetime, timedelta
+import json
+
+class AdvancedGhostJobDetector:
+    def __init__(self):
+        self.suspicious_patterns = {
+            'payment_keywords': ['pay for training', 'buy equipment', 'send money', 'deposit check'],
+            'too_good_keywords': ['get rich quick', 'unlimited income', 'work 2 hours', '6 figures'],
+            'vague_requirements': ['must be 18', 'no experience necessary', 'anyone can apply'],
+            'urgent_language': ['immediate start', 'apply now', 'limited spots', 'act fast']
+        }
+        
+    def comprehensive_analysis(self, job_data):
+        """Full analysis of job posting"""
+        results = {
+            'ghost_score': 0,
+            'confidence': 0,
+            'red_flags': [],
+            'recommendation': '',
+            'detailed_analysis': {}
+        }
+        
+        # 1. Content Analysis
+        content_score, content_flags = self.analyze_content(job_data)
+        
+        # 2. Company Verification
+        company_score, company_flags = self.verify_company(job_data)
+        
+        # 3. Posting Pattern Analysis
+        pattern_score, pattern_flags = self.analyze_posting_patterns(job_data)
+        
+        # 4. Communication Assessment
+        comm_score, comm_flags = self.assess_communication(job_data)
+        
+        # Calculate total score
+        total_score = content_score + company_score + pattern_score + comm_score
+        all_flags = content_flags + company_flags + pattern_flags + comm_flags
+        
+        results['ghost_score'] = min(total_score, 100)
+        results['red_flags'] = all_flags
+        results['detailed_analysis'] = {
+            'content_analysis': {'score': content_score, 'flags': content_flags},
+            'company_verification': {'score': company_score, 'flags': company_flags},
+            'posting_patterns': {'score': pattern_score, 'flags': pattern_flags},
+            'communication': {'score': comm_score, 'flags': comm_flags}
+        }
+        
+        # Generate recommendation
+        results['recommendation'] = self.generate_recommendation(total_score)
+        results['confidence'] = self.calculate_confidence(total_score, len(all_flags))
+        
+        return results
+    
+    def analyze_content(self, job_data):
+        """Analyze job posting content"""
+        score = 0
+        flags = []
+        
+        description = job_data.get('description', '').lower()
+        salary = job_data.get('salary', '')
+        requirements = job_data.get('requirements', '')
+        
+        # Check for payment requests
+        if any(keyword in description for keyword in self.suspicious_patterns['payment_keywords']):
+            score += 25
+            flags.append("Requests payment or financial information")
+        
+        # Check salary vs market rate
+        if salary:
+            market_rate = self.get_market_rate(job_data.get('title', ''))
+            if salary > market_rate * 1.5:
+                score += 20
+                flags.append(f"Salary 50%+ above market rate (${salary} vs ${market_rate})")
+        
+        # Check for vague requirements
+        if len(requirements.split()) < 50:
+            score += 15
+            flags.append("Vague or minimal requirements")
+        
+        # Check for unrealistic promises
+        if any(keyword in description for keyword in self.suspicious_patterns['too_good_keywords']):
+            score += 20
+            flags.append("Unrealistic income promises")
+        
+        return min(score, 80), flags
+    
+    def verify_company(self, job_data):
+        """Verify company legitimacy"""
+        score = 0
+        flags = []
+        
+        company_name = job_data.get('company', '')
+        company_email = job_data.get('contact_email', '')
+        company_website = job_data.get('company_website', '')
+        
+        # Check email domain
+        if company_email and not company_email.split('@')[1].startswith(company_name.lower().replace(' ', '')):
+            score += 15
+            flags.append("Email domain doesn't match company name")
+        
+        # Check if company website exists
+        if company_website:
+            try:
+                response = requests.get(company_website, timeout=5)
+                if response.status_code != 200:
+                    score += 10
+                    flags.append("Company website inaccessible")
+            except:
+                score += 15
+                flags.append("No valid company website")
+        
+        # Check company registration (simplified)
+        if len(company_name) < 3:
+            score += 10
+            flags.append("Company name too generic")
+        
+        return min(score, 60), flags
+    
+    def analyze_posting_patterns(self, job_data):
+        """Analyze posting behavior patterns"""
+        score = 0
+        flags = []
+        
+        posting_date = job_data.get('posting_date')
+        if posting_date:
+            days_posted = (datetime.now() - datetime.fromisoformat(posting_date)).days
+            if days_posted > 90:
+                score += 15
+                flags.append(f"Job posted for {days_posted} days (likely expired)")
+        
+        # Check for identical postings
+        if job_data.get('identical_postings_count', 0) > 5:
+            score += 10
+            flags.append("Identical job posted multiple times")
+        
+        return min(score, 50), flags
+    
+    def assess_communication(self, job_data):
+        """Assess communication quality"""
+        score = 0
+        flags = []
+        
+        contact_method = job_data.get('contact_method', '')
+        response_time = job_data.get('response_time', 0)
+        
+        # Check contact method
+        if contact_method == 'text_only':
+            score += 15
+            flags.append("Text-only communication")
+        
+        # Check response time (if immediate offer)
+        if response_time < 1:
+            score += 20
+            flags.append("Immediate job offer without proper process")
+        
+        return min(score, 50), flags
+    
+    def generate_recommendation(self, score):
+        """Generate recommendation based on score"""
+        if score >= 70:
+            return "🔴 HIGH RISK - Likely ghost job. AVOID applying."
+        elif score >= 50:
+            return "🟡 MEDIUM RISK - Proceed with caution. Research thoroughly."
+        elif score >= 30:
+            return "🟠 LOW-MEDIUM RISK - Some concerns noted. Verify details."
+        else:
+            return "🟢 LOW RISK - Appears legitimate. Safe to apply."
+    
+    def calculate_confidence(self, score, flag_count):
+        """Calculate confidence level"""
+        if score > 60 or flag_count > 5:
+            return min(95, score + flag_count * 5)
+        elif score > 30 or flag_count > 3:
+            return min(80, score + flag_count * 8)
+        else:
+            return min(70, score + flag_count * 10)
+
+# Usage Example
+detector = AdvancedGhostJobDetector()
+
+# Sample job data
+job_data = {
+    'title': 'Marketing Manager',
+    'company': 'Tech Corp Solutions',
+    'description': 'Make $150K working 10 hours per week! No experience needed. Send $50 for training materials.',
+    'salary': 150000,
+    'requirements': 'Must be 18+ and have internet access',
+    'contact_email': 'opportunities@gmail.com',
+    'posting_date': '2024-01-01',
+    'response_time': 0.5
+}
+
+result = detector.comprehensive_analysis(job_data)
+print(json.dumps(result, indent=2))
+
+
+
+——————————————————-
+
+
+Browser Extension: Java 
+
+// Ghost Job Detector Browser Extension
+class GhostJobDetectorExtension {
+    constructor() {
+        this.init();
+    }
+    
+    init() {
+        // Detect job posting pages
+        if (this.isJobPostingPage()) {
+            this.analyzeCurrentPage();
+        }
+    }
+    
+    isJobPostingPage() {
+        const jobKeywords = ['job', 'career', 'employment', 'hiring', 'position'];
+        const url = window.location.href.toLowerCase();
+        const title = document.title.toLowerCase();
+        
+        return jobKeywords.some(keyword => url.includes(keyword) || title.includes(keyword));
+    }
+    
+    analyzeCurrentPage() {
+        const jobData = this.extractJobData();
+        const analysis = this.analyzeJob(jobData);
+        this.displayResults(analysis);
+    }
+    
+    extractJobData() {
+        // Extract job data from page
+        return {
+            title: this.extractText('[data-testid="job-title"], .job-title, h1'),
+            company: this.extractText('[data-testid="company-name"], .company-name'),
+            description: this.extractText('[data-testid="job-description"], .job-description'),
+            salary: this.extractSalary(),
+            posting_date: this.extractPostingDate(),
+            requirements: this.extractText('[data-testid="job-requirements"], .requirements')
+        };
+    }
+    
+    displayResults(analysis) {
+        // Create and display results popup
+        const popup = this.createPopup(analysis);
+        document.body.appendChild(popup);
+    }
+    
+    createPopup(analysis) {
+        const popup = document.createElement('div');
+        popup.className = 'ghost-job-detector-popup';
+        popup.innerHTML = `
+            <div class="gjd-header">
+                <h3>🚨 Ghost Job Detector</h3>
+                <button class="gjd-close">&times;</button>
+            </div>
+            <div class="gjd-content">
+                <div class="gjd-score">
+                    <span class="gjd-score-value">${analysis.ghost_score}</span>
+                    <span class="gjd-score-label">Risk Score</span>
+                </div>
+                <div class="gjd-recommendation ${analysis.ghost_score >= 70 ? 'high-risk' : analysis.ghost_score >= 50 ? 'medium-risk' : 'low-risk'}">
+                    ${analysis.recommendation}
+                </div>
+                <div class="gjd-flags">
+                    <h4>Red Flags Detected:</h4>
+                    <ul>
+                        ${analysis.red_flags.map(flag => `<li>${flag}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .ghost-job-detector-popup {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 350px;
+                background: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-family: Arial, sans-serif;
+            }
+            .gjd-header {
+                background: #2c3e50;
+                color: white;
+                padding: 15px;
+                border-radius: 10px 10px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .gjd-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+            }
+            .gjd-content { padding: 20px; }
+            .gjd-score {
+                text-align: center;
+                margin-bottom: 15px;
+            }
+            .gjd-score-value {
+                display: block;
+                font-size: 48px;
+                font-weight: bold;
+                color: #e74c3c;
+            }
+            .gjd-recommendation {
+                padding: 10px;
+                border-radius: 5px;
+                margin-bottom: 15px;
+                font-weight: bold;
+            }
+            .high-risk { background: #ffebee; color: #c62828; }
+            .medium-risk { background: #fff3e0; color: #ef6c00; }
+            .low-risk { background: #e8f5e8; color: #2e7d32; }
+            .gjd-flags ul {
+                margin: 0;
+                padding-left: 20px;
+            }
+            .gjd-flags li {
+                margin-bottom: 5px;
+                color: #666;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        return popup;
+    }
+}
+
+// Initialize extension
+new GhostJobDetectorExtension();
+
+
+————————————————————-
+
+
+Mobile App interface: JSX 
+
+// React Native Mobile App
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, ScrollView, StyleSheet } from 'react-native';
+
+const GhostJobDetectorApp = () => {
+    const [jobData, setJobData] = useState({
+        title: '',
+        company: '',
+        description: '',
+        salary: '',
+        requirements: '',
+        contact_email: '',
+        posting_date: ''
+    });
+    
+    const [results, setResults] = useState(null);
+    
+    const analyzeJob = async () => {
+        // Call detection API
+        const response = await fetch('https://api.ghostjobdetector.com/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jobData)
+        });
+        
+        const data = await response.json();
+        setResults(data);
+    };
+    
+    return (
+        <ScrollView style={styles.container}>
+            <Text style={styles.title}>👻 Ghost Job Detector</Text>
+            
+            <TextInput
+                style={styles.input}
+                placeholder="Job Title"
+                value={jobData.title}
+                onChangeText={(text) => setJobData({...jobData, title: text})}
+            />
+            
+            <TextInput
+                style={styles.input}
+                placeholder="Company Name"
+                value={jobData.company}
+                onChangeText={(text) => setJobData({...jobData, company: text})}
+            />
+            
+            <TextInput
+                style={styles.input}
+                placeholder="Job Description"
+                multiline
+                value={jobData.description}
+                onChangeText={(text) => setJobData({...jobData, description: text})}
+            />
+            
+            <TextInput
+                style={styles.input}
+                placeholder="Salary"
+                keyboardType="numeric"
+                value={jobData.salary}
+                onChangeText={(text) => setJobData({...jobData, salary: text})}
+            />
+            
+            <Button title="Analyze Job" onPress={analyzeJob} />
+            
+            {results && (
+                <View style={styles.results}>
+                    <Text style={styles.score}>Risk Score: {results.ghost_score}/100</Text>
+                    <Text style={styles.recommendation}>{results.recommendation}</Text>
+                    
+                    {results.red_flags.map((flag, index) => (
+                        <Text key={index} style={styles.flag}>• {flag}</Text>
+                    ))}
+                </View>
+            )}
+        </ScrollView>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+    input: { borderWidth: 1, borderColor: '#ddd', padding: 10, marginBottom: 10, borderRadius: 5 },
+    results: { marginTop: 20, padding: 15, backgroundColor: '#f5f5f5', borderRadius: 10 },
+    score: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+    recommendation: { fontSize: 16, marginBottom: 10, fontWeight: 'bold' },
+    flag: { fontSize: 14, color: '#666', marginBottom: 5 }
+});
+
+export default GhostJobDetectorApp;
+
+
+————————————-
+
+API Integration:  Python 
+
+# Flask API for the detector
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import json
+
+app = Flask(__name__)
+CORS(app)
+
+detector = AdvancedGhostJobDetector()
+
+@app.route('/analyze', methods=['POST'])
+def analyze_job():
+    try:
+        job_data = request.json
+        results = detector.comprehensive_analysis(job_data)
+        return jsonify(results)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/batch-analyze', methods=['POST'])
+def batch_analyze():
+    """Analyze multiple job postings"""
+    try:
+        jobs_data = request.json.get('jobs', [])
+        results = []
+        
+        for job in jobs_data:
+            analysis = detector.comprehensive_analysis(job)
+            results.append({
+                'job_id': job.get('id'),
+                'analysis': analysis
+            })
+        
+        return jsonify({'results': results})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'version': '1.0.0'})
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+
+
+
+
+—————————————-
+
+
+For individual job analysis: bash 
+
+1. For Browser Extension:
+    * Install the extension in Chrome/Firefox
+    * Navigate to any job posting page
+    * Automatic analysis will appear
+
+python ghost_detector.py
+
+—————————————————-/
+
+For API Usage: bash 
+
+curl -X POST http://localhost:5000/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Marketing Manager", "company": "Test Corp", "salary": 150000}'
