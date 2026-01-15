@@ -1032,7 +1032,7 @@ export default function Home() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ResultsDisplay result={result} />
+              <ResultsDisplay result={result} jobInfo={analyzedJobInfo || undefined} />
             </motion.div>
           )}
         </AnimatePresence>
