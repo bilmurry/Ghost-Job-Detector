@@ -49,7 +49,13 @@ The core job analysis logic lives in `server/routes.ts` and uses pattern matchin
 - "Too good to be true" phrases
 - Vague job requirements
 - Urgent/pressure language
-- Personal email domains
+- Enhanced email/domain verification:
+  - 34 personal email domains (gmail, yahoo, international providers)
+  - 20 disposable/temporary email domains (tempmail, mailinator, etc.)
+  - Company name vs email domain mismatch detection
+  - Website vs email domain mismatch detection
+  - Suspicious email patterns (auto-generated, numbered addresses)
+  - Free subdomain service detection (wix, weebly, etc.)
 
 Analysis results include:
 - Ghost score (0-100)
@@ -70,7 +76,9 @@ Analysis results include:
 
 ### Database
 - **ORM**: Drizzle ORM configured for PostgreSQL
-- **Current State**: Schema defined but using in-memory storage (MemStorage class)
+- **Tables**: users, sessions, analyses
+- **Auth**: Replit Auth integration with secure session management
+- **Analysis History**: Persists user analyses with IDOR-protected queries
 - **Migration Tool**: drizzle-kit for schema management
 
 ### UI Component Library
