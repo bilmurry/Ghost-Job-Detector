@@ -1,6 +1,6 @@
 import { analyses, type Analysis, type InsertAnalysis } from "@shared/models/auth";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IAnalysisStorage {
   saveAnalysis(analysis: InsertAnalysis): Promise<Analysis>;
@@ -30,19 +30,14 @@ class AnalysisStorage implements IAnalysisStorage {
     const [analysis] = await db
       .select()
       .from(analyses)
-      .where(eq(analyses.id, id));
-    
-    if (analysis && analysis.userId === userId) {
-      return analysis;
-    }
-    return undefined;
+      .where(and(eq(analyses.id, id), eq(analyses.userId, userId)));
+    return analysis;
   }
 
   async deleteAnalysis(id: string, userId: string): Promise<boolean> {
-    const analysis = await this.getAnalysis(id, userId);
-    if (!analysis) return false;
-    
-    await db.delete(analyses).where(eq(analyses.id, id));
+    const result = await db
+      .delete(analyses)
+      .where(and(eq(analyses.id, id), eq(analyses.userId, userId)));
     return true;
   }
 }

@@ -355,11 +355,11 @@ export default function History() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-12" data-testid="loading-analyses">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         ) : analyses && analyses.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-3" data-testid="analyses-list">
             <AnimatePresence>
               {analyses.map((analysis) => (
                 <AnalysisCard
