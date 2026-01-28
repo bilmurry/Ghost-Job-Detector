@@ -81,6 +81,53 @@ const PERSONAL_EMAIL_DOMAINS = [
   "protonmail.com",
   "yandex.com",
   "zoho.com",
+  "live.com",
+  "msn.com",
+  "me.com",
+  "inbox.com",
+  "fastmail.com",
+  "tutanota.com",
+  "gmx.com",
+  "gmx.net",
+  "mail.ru",
+  "qq.com",
+  "163.com",
+  "126.com",
+  "sina.com",
+  "rediffmail.com",
+  "ymail.com",
+  "rocketmail.com",
+  "att.net",
+  "verizon.net",
+  "comcast.net",
+  "sbcglobal.net",
+  "earthlink.net",
+  "cox.net",
+  "bellsouth.net",
+  "optonline.net",
+];
+
+const DISPOSABLE_EMAIL_DOMAINS = [
+  "tempmail.com",
+  "throwaway.email",
+  "guerrillamail.com",
+  "10minutemail.com",
+  "mailinator.com",
+  "trashmail.com",
+  "fakeinbox.com",
+  "temp-mail.org",
+  "getnada.com",
+  "dispostable.com",
+  "maildrop.cc",
+  "yopmail.com",
+  "sharklasers.com",
+  "tmpmail.org",
+  "burnermail.io",
+  "mytemp.email",
+  "temp.email",
+  "tempmailo.com",
+  "mohmal.com",
+  "tempr.email",
 ];
 
 const MARKET_RATES: Record<string, number> = {
@@ -205,32 +252,124 @@ function analyzeContent(job: JobPosting): { score: number; flags: string[] } {
   return { score: Math.min(score, 80), flags };
 }
 
+function analyzeEmail(email: string, companyName: string): { score: number; flags: string[] } {
+  let score = 0;
+  const flags: string[] = [];
+  
+  const parts = email.split("@");
+  if (parts.length !== 2) return { score: 0, flags: [] };
+  
+  const [localPart, domain] = parts;
+  const domainLower = domain.toLowerCase();
+  
+  // Check for disposable email domains (critical red flag)
+  if (DISPOSABLE_EMAIL_DOMAINS.includes(domainLower)) {
+    score += 30;
+    flags.push(`Uses disposable/temporary email domain (${domainLower}) - critical red flag`);
+    return { score, flags };
+  }
+  
+  // Check for personal email domains
+  if (PERSONAL_EMAIL_DOMAINS.includes(domainLower)) {
+    score += 20;
+    flags.push(`Uses personal email domain (${domainLower}) instead of company email`);
+    return { score, flags };
+  }
+  
+  // Check for suspicious patterns in email local part
+  const numbersInLocal = (localPart.match(/\d/g) || []).length;
+  if (numbersInLocal >= 4) {
+    score += 8;
+    flags.push("Email address contains many numbers (often auto-generated)");
+  }
+  
+  // Check for suspicious local parts
+  const suspiciousLocalParts = [
+    "jobs", "careers", "hiring", "recruitment", "hr", 
+    "apply", "job", "work", "employment", "opportunity"
+  ];
+  const genericLocalParts = [
+    "info", "contact", "admin", "support", "noreply",
+    "hello", "team", "office"
+  ];
+  
+  const localLower = localPart.toLowerCase();
+  
+  // Check if company name appears in email domain
+  const companySlug = companyName
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/llc|inc|corp|ltd|co|company|group|holdings/gi, "")
+    .trim();
+  
+  // Extract domain name without TLD
+  const domainName = domainLower.split(".")[0];
+  
+  // Calculate similarity between company name and domain
+  const companyChars = companySlug.slice(0, Math.min(5, companySlug.length));
+  const domainContainsCompany = companyChars.length >= 3 && domainName.includes(companyChars);
+  const companyContainsDomain = companyChars.length >= 3 && companySlug.includes(domainName.slice(0, 3));
+  
+  if (!domainContainsCompany && !companyContainsDomain && companySlug.length >= 3) {
+    // Check if it's not just a generic email
+    const isGenericJobEmail = suspiciousLocalParts.some(p => localLower.includes(p));
+    const isGenericLocal = genericLocalParts.some(p => localLower === p);
+    
+    if (!isGenericLocal) {
+      score += 12;
+      flags.push("Email domain doesn't appear to match company name");
+    }
+  }
+  
+  // Check for free subdomain services
+  const freeSubdomainServices = [
+    "wix.com", "weebly.com", "squarespace.com", "wordpress.com",
+    "blogspot.com", "sites.google.com", "github.io", "netlify.app"
+  ];
+  
+  if (freeSubdomainServices.some(s => domainLower.includes(s))) {
+    score += 15;
+    flags.push("Email uses a free website builder domain - unusual for established companies");
+  }
+  
+  return { score, flags };
+}
+
 function verifyCompany(job: JobPosting): { score: number; flags: string[] } {
   let score = 0;
   const flags: string[] = [];
 
   if (job.contactEmail) {
-    const emailDomain = job.contactEmail.split("@")[1]?.toLowerCase();
-    
-    if (emailDomain && PERSONAL_EMAIL_DOMAINS.includes(emailDomain)) {
-      score += 20;
-      flags.push(`Uses personal email domain (${emailDomain}) instead of company email`);
-    }
-
-    const companySlug = job.company
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .replace(/llc|inc|corp|ltd|co/g, "");
-    
-    if (emailDomain && !emailDomain.includes(companySlug.slice(0, 5)) && !PERSONAL_EMAIL_DOMAINS.includes(emailDomain)) {
-      score += 10;
-      flags.push("Email domain doesn't appear to match company name");
-    }
+    const emailAnalysis = analyzeEmail(job.contactEmail, job.company);
+    score += emailAnalysis.score;
+    flags.push(...emailAnalysis.flags);
   }
 
   if (!job.companyWebsite) {
     score += 10;
     flags.push("No company website provided");
+  } else {
+    // Check if website domain matches email domain
+    if (job.contactEmail) {
+      const emailDomain = job.contactEmail.split("@")[1]?.toLowerCase();
+      try {
+        const websiteUrl = new URL(job.companyWebsite.startsWith("http") ? job.companyWebsite : `https://${job.companyWebsite}`);
+        const websiteDomain = websiteUrl.hostname.replace("www.", "").toLowerCase();
+        
+        if (emailDomain && emailDomain !== websiteDomain && !PERSONAL_EMAIL_DOMAINS.includes(emailDomain)) {
+          // Check if they're related (e.g., company.com vs jobs.company.com)
+          const emailRoot = emailDomain.split(".").slice(-2).join(".");
+          const websiteRoot = websiteDomain.split(".").slice(-2).join(".");
+          
+          if (emailRoot !== websiteRoot) {
+            score += 8;
+            flags.push("Email domain doesn't match company website domain");
+          }
+        }
+      } catch {
+        // Invalid URL, already flagged by schema
+      }
+    }
   }
 
   const genericCompanyNames = [
@@ -244,6 +383,11 @@ function verifyCompany(job: JobPosting): { score: number; flags: string[] } {
     "elite",
     "premier",
     "prestige",
+    "freedom",
+    "wealth",
+    "dream",
+    "destiny",
+    "infinity",
   ];
   const lowerCompany = job.company.toLowerCase();
   
@@ -267,7 +411,7 @@ function verifyCompany(job: JobPosting): { score: number; flags: string[] } {
     flags.push("Company name is unusually short");
   }
 
-  return { score: Math.min(score, 60), flags };
+  return { score: Math.min(score, 70), flags };
 }
 
 function analyzePostingPatterns(job: JobPosting): { score: number; flags: string[] } {
