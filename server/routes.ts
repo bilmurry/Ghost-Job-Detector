@@ -7,6 +7,8 @@ import {
   type RedFlag,
   type RedFlagSeverity,
 } from "@shared/schema";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { analysisStorage } from "./storage";
 
 const SUSPICIOUS_PATTERNS = {
   paymentKeywords: [
@@ -442,7 +444,11 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.post("/api/analyze", (req, res) => {
+  // Setup auth before other routes
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  app.post("/api/analyze", async (req: any, res) => {
     try {
       const parseResult = jobPostingSchema.safeParse(req.body);
       
@@ -454,12 +460,75 @@ export async function registerRoutes(
       }
 
       const result = analyzeJobPosting(parseResult.data);
+      
+      // Save analysis if user is authenticated
+      if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+        try {
+          await analysisStorage.saveAnalysis({
+            userId: req.user.claims.sub,
+            jobTitle: parseResult.data.title,
+            company: parseResult.data.company,
+            ghostScore: result.ghostScore,
+            riskLevel: result.riskLevel,
+            confidence: result.confidence,
+            recommendation: result.recommendation,
+            redFlagsCount: result.redFlags.length,
+            jobPosting: parseResult.data,
+            analysisResult: result,
+          });
+        } catch (saveError) {
+          console.error("Failed to save analysis:", saveError);
+        }
+      }
+      
       return res.json(result);
     } catch (error) {
       console.error("Analysis error:", error);
       return res.status(500).json({
         error: "Failed to analyze job posting",
       });
+    }
+  });
+
+  // Get user's analysis history
+  app.get("/api/analyses", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analyses = await analysisStorage.getUserAnalyses(userId);
+      return res.json(analyses);
+    } catch (error) {
+      console.error("Error fetching analyses:", error);
+      return res.status(500).json({ error: "Failed to fetch analyses" });
+    }
+  });
+
+  // Get single analysis
+  app.get("/api/analyses/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const analysis = await analysisStorage.getAnalysis(req.params.id, userId);
+      if (!analysis) {
+        return res.status(404).json({ error: "Analysis not found" });
+      }
+      return res.json(analysis);
+    } catch (error) {
+      console.error("Error fetching analysis:", error);
+      return res.status(500).json({ error: "Failed to fetch analysis" });
+    }
+  });
+
+  // Delete analysis
+  app.delete("/api/analyses/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const success = await analysisStorage.deleteAnalysis(req.params.id, userId);
+      if (!success) {
+        return res.status(404).json({ error: "Analysis not found" });
+      }
+      return res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting analysis:", error);
+      return res.status(500).json({ error: "Failed to delete analysis" });
     }
   });
 
