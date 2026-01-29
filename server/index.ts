@@ -85,6 +85,9 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  app.get("/", (_req, res) => {
+    res.send("Ghost Job Detector API is running");
+  });
   httpServer.listen(
     {
       port,
