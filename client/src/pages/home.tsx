@@ -22,14 +22,17 @@ import {
   ExternalLink,
   LogIn,
   LogOut,
-  User,
   History,
+  ScanLine,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -64,57 +67,65 @@ import {
 
 const severityConfig: Record<
   RedFlagSeverity,
-  { color: string; bgColor: string; icon: typeof AlertTriangle; label: string }
+  { color: string; bgColor: string; dotColor: string; icon: typeof AlertTriangle; label: string }
 > = {
   critical: {
-    color: "text-red-600 dark:text-red-400",
-    bgColor: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900",
+    color: "text-red-500 dark:text-red-400",
+    bgColor: "bg-red-500/5 dark:bg-red-500/10 border-red-500/15 dark:border-red-500/20",
+    dotColor: "bg-red-500",
     icon: AlertTriangle,
     label: "Critical",
   },
   high: {
-    color: "text-orange-600 dark:text-orange-400",
-    bgColor: "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900",
+    color: "text-orange-500 dark:text-orange-400",
+    bgColor: "bg-orange-500/5 dark:bg-orange-500/10 border-orange-500/15 dark:border-orange-500/20",
+    dotColor: "bg-orange-500",
     icon: AlertCircle,
     label: "High",
   },
   medium: {
-    color: "text-amber-600 dark:text-amber-400",
-    bgColor: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900",
+    color: "text-amber-500 dark:text-amber-400",
+    bgColor: "bg-amber-500/5 dark:bg-amber-500/10 border-amber-500/15 dark:border-amber-500/20",
+    dotColor: "bg-amber-500",
     icon: Info,
     label: "Medium",
   },
   low: {
-    color: "text-blue-600 dark:text-blue-400",
-    bgColor: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900",
-    icon: Info,
+    color: "text-emerald-500 dark:text-emerald-400",
+    bgColor: "bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/15 dark:border-emerald-500/20",
+    dotColor: "bg-emerald-500",
+    icon: CheckCircle,
     label: "Low",
   },
 };
 
 const riskLevelConfig: Record<
   string,
-  { color: string; bgColor: string; textColor: string }
+  { color: string; strokeColor: string; textColor: string; icon: typeof ShieldCheck }
 > = {
   high: {
     color: "from-red-500 to-red-600",
-    bgColor: "bg-red-500",
-    textColor: "text-red-600 dark:text-red-400",
+    strokeColor: "stroke-red-500",
+    textColor: "text-red-500 dark:text-red-400",
+    icon: ShieldX,
   },
   medium: {
     color: "from-amber-500 to-amber-600",
-    bgColor: "bg-amber-500",
-    textColor: "text-amber-600 dark:text-amber-400",
+    strokeColor: "stroke-amber-500",
+    textColor: "text-amber-500 dark:text-amber-400",
+    icon: ShieldAlert,
   },
   "low-medium": {
     color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-500",
-    textColor: "text-orange-600 dark:text-orange-400",
+    strokeColor: "stroke-orange-500",
+    textColor: "text-orange-500 dark:text-orange-400",
+    icon: ShieldAlert,
   },
   low: {
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-500",
-    textColor: "text-green-600 dark:text-green-400",
+    color: "from-emerald-500 to-emerald-600",
+    strokeColor: "stroke-emerald-500",
+    textColor: "text-emerald-500 dark:text-emerald-400",
+    icon: ShieldCheck,
   },
 };
 
@@ -124,7 +135,7 @@ function RiskScoreCircle({ score, riskLevel }: { score: number; riskLevel: strin
   const config = riskLevelConfig[riskLevel] || riskLevelConfig.low;
 
   return (
-    <div className="relative w-40 h-40 mx-auto">
+    <div className="relative w-36 h-36 mx-auto" data-testid="risk-score-circle">
       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
         <circle
           cx="50"
@@ -132,17 +143,17 @@ function RiskScoreCircle({ score, riskLevel }: { score: number; riskLevel: strin
           r="45"
           fill="none"
           stroke="currentColor"
-          strokeWidth="8"
-          className="text-muted/30"
+          strokeWidth="6"
+          className="text-muted/40"
         />
         <motion.circle
           cx="50"
           cy="50"
           r="45"
           fill="none"
-          strokeWidth="8"
+          strokeWidth="6"
           strokeLinecap="round"
-          className={config.bgColor}
+          className={config.strokeColor}
           style={{
             strokeDasharray: circumference,
           }}
@@ -153,14 +164,15 @@ function RiskScoreCircle({ score, riskLevel }: { score: number; riskLevel: strin
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <motion.span
-          className={`text-4xl font-bold ${config.textColor}`}
+          className={`text-4xl font-semibold tracking-tight ${config.textColor}`}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
+          data-testid="text-risk-score"
         >
           {score}
         </motion.span>
-        <span className="text-sm text-muted-foreground">Risk Score</span>
+        <span className="text-xs text-muted-foreground font-medium tracking-wide uppercase">Risk Score</span>
       </div>
     </div>
   );
@@ -169,51 +181,53 @@ function RiskScoreCircle({ score, riskLevel }: { score: number; riskLevel: strin
 function RecommendationPanel({
   recommendation,
   riskLevel,
+  confidence,
 }: {
   recommendation: string;
   riskLevel: string;
+  confidence: number;
 }) {
   const config = riskLevelConfig[riskLevel] || riskLevelConfig.low;
-  const icons: Record<string, typeof AlertTriangle> = {
-    high: AlertTriangle,
-    medium: AlertCircle,
-    "low-medium": Info,
-    low: CheckCircle,
+  const Icon = config.icon;
+
+  const riskLabels: Record<string, string> = {
+    high: "High Risk Detected",
+    medium: "Proceed with Caution",
+    "low-medium": "Some Concerns Noted",
+    low: "Appears Legitimate",
   };
-  const Icon = icons[riskLevel] || Info;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
+      className="h-full"
     >
-      <Card className={`border-2 ${
-        riskLevel === "high"
-          ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/20"
-          : riskLevel === "medium"
-          ? "border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20"
-          : riskLevel === "low-medium"
-          ? "border-orange-300 dark:border-orange-800 bg-orange-50/50 dark:bg-orange-950/20"
-          : "border-green-300 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20"
-      }`}>
-        <CardContent className="p-6">
-          <div className="flex items-start gap-4">
-            <div className={`p-3 rounded-full ${config.bgColor}`}>
-              <Icon className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className={`text-lg font-semibold ${config.textColor}`}>
-                {riskLevel === "high"
-                  ? "High Risk Detected"
-                  : riskLevel === "medium"
-                  ? "Proceed with Caution"
-                  : riskLevel === "low-medium"
-                  ? "Some Concerns Noted"
-                  : "Appears Legitimate"}
+      <Card className="h-full">
+        <CardContent className="p-6 flex flex-col justify-between h-full">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Icon className={`w-5 h-5 ${config.textColor}`} />
+              <h3 className={`text-base font-semibold ${config.textColor}`}>
+                {riskLabels[riskLevel] || "Analysis Complete"}
               </h3>
-              <p className="text-muted-foreground mt-1">{recommendation}</p>
             </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">{recommendation}</p>
+          </div>
+          <div className="flex items-center gap-3 mt-5 pt-4 border-t">
+            <div className="flex-1">
+              <div className="text-xs text-muted-foreground mb-1.5">Confidence</div>
+              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full bg-foreground/30"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${confidence}%` }}
+                  transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+                />
+              </div>
+            </div>
+            <span className="text-sm font-medium tabular-nums" data-testid="text-confidence">{confidence}%</span>
           </div>
         </CardContent>
       </Card>
@@ -222,7 +236,6 @@ function RecommendationPanel({
 }
 
 function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
-
   const [openSections, setOpenSections] = useState<Set<RedFlagSeverity>>(
     new Set<RedFlagSeverity>(["critical", "high"])
   );
@@ -248,22 +261,21 @@ function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
   if (flags.length === 0) {
     return (
       <Card>
-        <CardContent className="p-6 text-center">
-          <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
-          <p className="text-muted-foreground">No red flags detected</p>
+        <CardContent className="p-8 text-center">
+          <ShieldCheck className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No red flags detected</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {severityOrder.map((severity) => {
         const severityFlags = groupedFlags[severity];
         if (!severityFlags || severityFlags.length === 0) return null;
 
         const config = severityConfig[severity];
-        const Icon = config.icon;
         const isOpen = openSections.has(severity);
 
         return (
@@ -279,9 +291,9 @@ function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
                   <CardHeader className="cursor-pointer p-4">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
-                        <Icon className={`w-5 h-5 ${config.color}`} />
-                        <CardTitle className="text-base font-medium">
-                          {config.label} Risk
+                        <span className={`w-2 h-2 rounded-full ${config.dotColor}`} />
+                        <CardTitle className="text-sm font-medium tracking-tight">
+                          {config.label}
                         </CardTitle>
                         <Badge variant="secondary" className="text-xs">
                           {severityFlags.length}
@@ -297,14 +309,15 @@ function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <CardContent className="pt-0 pb-4 px-4">
-                    <ul className="space-y-2">
+                    <ul className="space-y-2.5">
                       {severityFlags.map((flag, idx) => (
                         <li
                           key={idx}
-                          className="flex items-start gap-2 text-sm text-foreground/80"
+                          className="flex items-start gap-3 text-sm text-foreground/75"
+                          data-testid={`flag-${severity}-${idx}`}
                         >
-                          <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${config.color.replace("text-", "bg-")}`} />
-                          {flag.message}
+                          <span className={`mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ${config.dotColor}`} />
+                          <span className="leading-relaxed">{flag.message}</span>
                         </li>
                       ))}
                     </ul>
@@ -333,10 +346,10 @@ function AnalysisCategoryCard({
   delay: number;
 }) {
   const getScoreColor = (score: number) => {
-    if (score >= 50) return "text-red-600 dark:text-red-400";
-    if (score >= 30) return "text-amber-600 dark:text-amber-400";
-    if (score >= 15) return "text-orange-600 dark:text-orange-400";
-    return "text-green-600 dark:text-green-400";
+    if (score >= 50) return "text-red-500 dark:text-red-400";
+    if (score >= 30) return "text-amber-500 dark:text-amber-400";
+    if (score >= 15) return "text-orange-500 dark:text-orange-400";
+    return "text-emerald-500 dark:text-emerald-400";
   };
 
   return (
@@ -349,10 +362,10 @@ function AnalysisCategoryCard({
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Icon className="w-5 h-5 text-muted-foreground" />
-              <CardTitle className="text-sm font-medium">{title}</CardTitle>
+              <Icon className="w-4 h-4 text-muted-foreground" />
+              <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{title}</CardTitle>
             </div>
-            <span className={`text-lg font-bold ${getScoreColor(score)}`}>
+            <span className={`text-lg font-semibold tabular-nums ${getScoreColor(score)}`}>
               {score}
             </span>
           </div>
@@ -365,20 +378,20 @@ function AnalysisCategoryCard({
                   key={idx}
                   className="text-xs text-muted-foreground flex items-start gap-2"
                 >
-                  <span className="mt-1.5 w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
-                  <span className="line-clamp-2">{flag}</span>
+                  <span className="mt-1.5 w-1 h-1 rounded-full bg-muted-foreground/50 flex-shrink-0" />
+                  <span className="line-clamp-2 leading-relaxed">{flag}</span>
                 </li>
               ))}
               {flags.length > 3 && (
-                <li className="text-xs text-muted-foreground/60">
-                  +{flags.length - 3} more...
+                <li className="text-xs text-muted-foreground/50">
+                  +{flags.length - 3} more
                 </li>
               )}
             </ul>
           ) : (
-            <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+            <p className="text-xs text-emerald-500 dark:text-emerald-400 flex items-center gap-1.5">
               <CheckCircle className="w-3 h-3" />
-              No issues found
+              No issues
             </p>
           )}
         </CardContent>
@@ -394,23 +407,22 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
       animate={{ opacity: 1 }}
       className="space-y-6"
     >
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <Card>
-            <CardContent className="p-6">
+          <Card className="h-full">
+            <CardContent className="p-6 flex flex-col items-center justify-center h-full">
               <RiskScoreCircle score={result.ghostScore} riskLevel={result.riskLevel} />
-              <div className="text-center mt-4">
-                <Badge
-                  variant="secondary"
-                  className={`${riskLevelConfig[result.riskLevel]?.textColor || ""}`}
-                >
-                  {result.confidence}% Confidence
-                </Badge>
-              </div>
+              <Badge
+                variant="secondary"
+                className="mt-4"
+                data-testid="badge-risk-level"
+              >
+                {result.riskLevel.replace("-", " ").toUpperCase()} RISK
+              </Badge>
             </CardContent>
           </Card>
         </motion.div>
@@ -419,27 +431,28 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
           <RecommendationPanel
             recommendation={result.recommendation}
             riskLevel={result.riskLevel}
+            confidence={result.confidence}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <AnalysisCategoryCard
-          title="Content Analysis"
+          title="Content"
           icon={FileText}
           score={result.detailedAnalysis?.contentAnalysis?.score ?? 0}
           flags={result.detailedAnalysis?.contentAnalysis?.flags ?? []}
           delay={0.4}
         />
         <AnalysisCategoryCard
-          title="Content Analysis"
-          icon={FileText}
-          score={result.detailedAnalysis?.contentAnalysis?.score ?? 0}
-          flags={result.detailedAnalysis?.contentAnalysis?.flags ?? []}
-          delay={0.4}
+          title="Company"
+          icon={Building2}
+          score={result.detailedAnalysis?.companyVerification?.score ?? 0}
+          flags={result.detailedAnalysis?.companyVerification?.flags ?? []}
+          delay={0.5}
         />
         <AnalysisCategoryCard
-          title="Posting Patterns"
+          title="Patterns"
           icon={Clock}
           score={result.detailedAnalysis?.postingPatterns?.score ?? 0}
           flags={result.detailedAnalysis?.postingPatterns?.flags ?? []}
@@ -459,7 +472,7 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
       >
-        <h3 className="text-lg font-semibold mb-4">Detected Red Flags</h3>
+        <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">Detected Issues</h3>
         <RedFlagsSection flags={result.redFlags} />
       </motion.div>
     </motion.div>
@@ -509,10 +522,10 @@ function JobInputForm({
   };
 
   return (
-    <Card className="shadow-lg">
+    <Card>
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <CardTitle className="text-xl">Analyze Job Posting</CardTitle>
+          <CardTitle className="text-lg font-semibold tracking-tight">Analyze Job Posting</CardTitle>
           <Button
             variant="outline"
             size="sm"
@@ -520,7 +533,6 @@ function JobInputForm({
             type="button"
             data-testid="button-load-example"
           >
-            <ExternalLink className="w-4 h-4 mr-2" />
             Load Example
           </Button>
         </div>
@@ -529,35 +541,33 @@ function JobInputForm({
         <Tabs defaultValue="manual" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="manual" data-testid="tab-manual-entry">
-              <FileText className="w-4 h-4 mr-2" />
               Manual Entry
             </TabsTrigger>
             <TabsTrigger value="url" data-testid="tab-url-entry" disabled>
-              <ExternalLink className="w-4 h-4 mr-2" />
               From URL
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="url">
-            <div className="text-center py-8 text-muted-foreground">
-              <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>URL analysis coming soon!</p>
-              <p className="text-sm mt-1">
-                Use manual entry to analyze job postings for now.
+            <div className="text-center py-12 text-muted-foreground">
+              <ScanLine className="w-10 h-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">URL analysis coming soon</p>
+              <p className="text-xs mt-1 text-muted-foreground/60">
+                Use manual entry for now
               </p>
             </div>
           </TabsContent>
 
           <TabsContent value="manual">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Job Title *</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Job Title *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Software Engineer"
@@ -575,7 +585,7 @@ function JobInputForm({
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company Name *</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Company *</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="e.g., Acme Corp"
@@ -594,7 +604,7 @@ function JobInputForm({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Job Description *</FormLabel>
+                      <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Job Description *</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Paste the full job description here..."
@@ -614,7 +624,7 @@ function JobInputForm({
                     name="salary"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Salary (Annual USD)</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Salary (Annual USD)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -639,7 +649,7 @@ function JobInputForm({
                     name="contactEmail"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Email</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact Email</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
@@ -659,7 +669,7 @@ function JobInputForm({
                   name="requirements"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Requirements</FormLabel>
+                      <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Requirements</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="List job requirements and qualifications..."
@@ -673,13 +683,31 @@ function JobInputForm({
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="postingDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Posting Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          {...field}
+                          data-testid="input-posting-date"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="companyWebsite"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company Website</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Website</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="https://..."
@@ -697,7 +725,7 @@ function JobInputForm({
                     name="contactMethod"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Contact Method</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact Method</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           value={field.value}
@@ -725,7 +753,7 @@ function JobInputForm({
                     name="responseTime"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Response Time (hours)</FormLabel>
+                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Response Time (hrs)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -756,13 +784,13 @@ function JobInputForm({
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Analyzing...
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing
                     </>
                   ) : (
                     <>
-                      <Search className="w-5 h-5 mr-2" />
-                      Analyze Job Posting
+                      <ScanLine className="w-4 h-4 mr-2" />
+                      Analyze Posting
                     </>
                   )}
                 </Button>
@@ -795,22 +823,20 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 h-16">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-primary" />
-              <div>
-                <h1 className="text-lg font-semibold">Ghost Job Detector</h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  Protect yourself from fake job postings
-                </p>
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between gap-4 h-14">
+            <Link href="/">
+              <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-home">
+                <Shield className="w-5 h-5" />
+                <span className="text-sm font-semibold tracking-tight">Ghost Job Detector</span>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
+            </Link>
+            <div className="flex items-center gap-1">
               {result && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
+                  size="sm"
                   onClick={handleNewAnalysis}
                   data-testid="button-new-analysis"
                 >
@@ -834,8 +860,8 @@ export default function Home() {
                   <Loader2 className="w-4 h-4 animate-spin" />
                 </Button>
               ) : isAuthenticated && user ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground hidden sm:block">
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground hidden sm:block mr-1">
                     {user.firstName || user.email?.split("@")[0]}
                   </span>
                   <a href="/api/logout">
@@ -855,7 +881,7 @@ export default function Home() {
                     size="sm"
                     data-testid="button-login"
                   >
-                    <LogIn className="w-4 h-4 mr-2" />
+                    <LogIn className="w-4 h-4 mr-1.5" />
                     Sign In
                   </Button>
                 </a>
@@ -865,7 +891,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           {!result ? (
             <motion.div
@@ -875,15 +901,20 @@ export default function Home() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              <div className="text-center max-w-2xl mx-auto">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Is That Job Real?
-                </h2>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  Our AI-powered detector analyzes job postings for red flags,
-                  scam indicators, and signs of "ghost jobs" that companies post
-                  with no intention of hiring.
-                </p>
+              <div className="text-center max-w-xl mx-auto pt-8 pb-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                    Is that job real?
+                  </h2>
+                  <p className="mt-3 text-base text-muted-foreground leading-relaxed">
+                    Detect red flags, scam indicators, and ghost jobs that companies
+                    post with no intention of hiring.
+                  </p>
+                </motion.div>
               </div>
 
               <div className="max-w-3xl mx-auto">
@@ -894,32 +925,29 @@ export default function Home() {
               </div>
 
               <div className="max-w-3xl mx-auto">
-                <Card className="bg-muted/30">
-                  <CardContent className="p-6">
-                    <h3 className="font-medium mb-4 flex items-center gap-2">
-                      <Info className="w-5 h-5 text-muted-foreground" />
-                      What We Check
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-start gap-2">
-                        <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Suspicious keywords and unrealistic promises</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Building2 className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Company legitimacy and email domain matching</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Clock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Posting age and repetitive listings</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <MessageSquare className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <span>Communication methods and response patterns</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { icon: FileText, label: "Content Analysis", desc: "Suspicious keywords" },
+                    { icon: Building2, label: "Company Checks", desc: "Domain verification" },
+                    { icon: Clock, label: "Pattern Detection", desc: "Posting anomalies" },
+                    { icon: MessageSquare, label: "Communication", desc: "Response signals" },
+                  ].map((item, idx) => (
+                    <motion.div
+                      key={item.label}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 + idx * 0.1 }}
+                    >
+                      <Card className="text-center">
+                        <CardContent className="p-4">
+                          <item.icon className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
+                          <div className="text-xs font-medium">{item.label}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">{item.desc}</div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -936,15 +964,14 @@ export default function Home() {
       </main>
 
       <footer className="border-t mt-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Shield className="w-3.5 h-3.5" />
               <span>Ghost Job Detector</span>
             </div>
-            <p className="text-center sm:text-right">
-              This tool provides guidance only. Always verify job opportunities
-              through official channels.
+            <p>
+              Guidance only. Always verify through official channels.
             </p>
           </div>
         </div>

@@ -17,6 +17,9 @@ import {
   Info,
   Loader2,
   LogIn,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,24 +39,24 @@ import type { AnalysisResult, JobPosting } from "@shared/schema";
 
 const riskLevelConfig: Record<string, { color: string; bgColor: string; icon: typeof AlertTriangle }> = {
   high: {
-    color: "text-red-600 dark:text-red-400",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
-    icon: AlertTriangle,
+    color: "text-red-500 dark:text-red-400",
+    bgColor: "bg-red-500/10 dark:bg-red-500/15",
+    icon: ShieldX,
   },
   medium: {
-    color: "text-amber-600 dark:text-amber-400",
-    bgColor: "bg-amber-100 dark:bg-amber-900/30",
-    icon: AlertCircle,
+    color: "text-amber-500 dark:text-amber-400",
+    bgColor: "bg-amber-500/10 dark:bg-amber-500/15",
+    icon: ShieldAlert,
   },
   "low-medium": {
-    color: "text-orange-600 dark:text-orange-400",
-    bgColor: "bg-orange-100 dark:bg-orange-900/30",
-    icon: Info,
+    color: "text-orange-500 dark:text-orange-400",
+    bgColor: "bg-orange-500/10 dark:bg-orange-500/15",
+    icon: ShieldAlert,
   },
   low: {
-    color: "text-green-600 dark:text-green-400",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
-    icon: CheckCircle,
+    color: "text-emerald-500 dark:text-emerald-400",
+    bgColor: "bg-emerald-500/10 dark:bg-emerald-500/15",
+    icon: ShieldCheck,
   },
 };
 
@@ -91,11 +94,11 @@ function AnalysisCard({
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1 min-w-0">
-              <div className={`p-2 rounded-full ${config.bgColor} flex-shrink-0`}>
+              <div className={`p-2 rounded-md ${config.bgColor} flex-shrink-0`}>
                 <Icon className={`w-4 h-4 ${config.color}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-sm truncate" data-testid={`text-job-title-${analysis.id}`}>
+                <h3 className="font-medium text-sm truncate tracking-tight" data-testid={`text-job-title-${analysis.id}`}>
                   {analysis.jobTitle}
                 </h3>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
@@ -105,7 +108,7 @@ function AnalysisCard({
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <Badge variant="secondary" className={config.color}>
+                  <Badge variant="secondary" className={`text-xs ${config.color}`}>
                     Score: {analysis.ghostScore}
                   </Badge>
                   <Badge variant="outline" className="text-xs">
@@ -163,49 +166,51 @@ function AnalysisDetailDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 tracking-tight">
             <Icon className={`w-5 h-5 ${config.color}`} />
             {analysis.jobTitle}
           </DialogTitle>
           <DialogDescription>
-            {analysis.company} - Analyzed on {formatDate(analysis.createdAt)}
+            {analysis.company} - {formatDate(analysis.createdAt)}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
+          <div className="flex items-center gap-6 p-4 rounded-md bg-muted/50">
             <div className="text-center">
-              <div className={`text-3xl font-bold ${config.color}`}>
+              <div className={`text-3xl font-semibold tabular-nums ${config.color}`}>
                 {analysis.ghostScore}
               </div>
-              <div className="text-xs text-muted-foreground">Risk Score</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Risk Score</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-muted-foreground">
+              <div className="text-3xl font-semibold tabular-nums text-muted-foreground">
                 {analysis.confidence}%
               </div>
-              <div className="text-xs text-muted-foreground">Confidence</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">Confidence</div>
             </div>
-            <div className="flex-1">
+            <div className="flex-1 text-right">
               <Badge className={`${config.bgColor} ${config.color} border-0`}>
-                {analysis.riskLevel.toUpperCase()} RISK
+                {analysis.riskLevel.replace("-", " ").toUpperCase()} RISK
               </Badge>
             </div>
           </div>
 
           <div>
-            <h4 className="font-medium mb-2">Recommendation</h4>
-            <p className="text-sm text-muted-foreground">{analysis.recommendation}</p>
+            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Recommendation</h4>
+            <p className="text-sm text-foreground/80 leading-relaxed">{analysis.recommendation}</p>
           </div>
 
           {result.redFlags && result.redFlags.length > 0 && (
             <div>
-              <h4 className="font-medium mb-2">Red Flags ({result.redFlags.length})</h4>
-              <ul className="space-y-1">
+              <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                Red Flags ({result.redFlags.length})
+              </h4>
+              <ul className="space-y-1.5">
                 {result.redFlags.map((flag, idx) => (
-                  <li key={idx} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-muted-foreground flex-shrink-0" />
-                    {flag.message}
+                  <li key={idx} className="text-sm text-foreground/70 flex items-start gap-2">
+                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-muted-foreground/40 flex-shrink-0" />
+                    <span className="leading-relaxed">{flag.message}</span>
                   </li>
                 ))}
               </ul>
@@ -213,12 +218,12 @@ function AnalysisDetailDialog({
           )}
 
           <div>
-            <h4 className="font-medium mb-2">Job Details</h4>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p><strong>Title:</strong> {jobPosting.title}</p>
-              <p><strong>Company:</strong> {jobPosting.company}</p>
-              {jobPosting.salary && <p><strong>Salary:</strong> ${jobPosting.salary.toLocaleString()}</p>}
-              {jobPosting.contactEmail && <p><strong>Email:</strong> {jobPosting.contactEmail}</p>}
+            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">Job Details</h4>
+            <div className="text-sm text-foreground/70 space-y-1">
+              <p><span className="text-foreground/90 font-medium">Title:</span> {jobPosting.title}</p>
+              <p><span className="text-foreground/90 font-medium">Company:</span> {jobPosting.company}</p>
+              {jobPosting.salary && <p><span className="text-foreground/90 font-medium">Salary:</span> ${jobPosting.salary.toLocaleString()}</p>}
+              {jobPosting.contactEmail && <p><span className="text-foreground/90 font-medium">Email:</span> {jobPosting.contactEmail}</p>}
             </div>
           </div>
         </div>
@@ -230,6 +235,33 @@ function AnalysisDetailDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PageHeader({ subtitle }: { subtitle: string }) {
+  return (
+    <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between gap-4 h-14">
+          <div className="flex items-center gap-2.5">
+            <Shield className="w-5 h-5" />
+            <div>
+              <span className="text-sm font-semibold tracking-tight">Ghost Job Detector</span>
+              <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">{subtitle}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link href="/">
+              <Button variant="ghost" size="sm" data-testid="button-back-home">
+                <ArrowLeft className="w-4 h-4 mr-1.5" />
+                Back
+              </Button>
+            </Link>
+            <ThemeToggle />
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -265,7 +297,7 @@ export default function History() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -273,42 +305,18 @@ export default function History() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-background">
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between gap-4 h-16">
-              <div className="flex items-center gap-3">
-                <Shield className="w-8 h-8 text-primary" />
-                <div>
-                  <h1 className="text-lg font-semibold">Ghost Job Detector</h1>
-                  <p className="text-xs text-muted-foreground hidden sm:block">
-                    Analysis History
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Link href="/">
-                  <Button variant="outline" size="sm" data-testid="button-back-home">
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
-                </Link>
-                <ThemeToggle />
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageHeader subtitle="History" />
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <Card>
-            <CardContent className="p-8 text-center">
-              <LogIn className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Sign in to view your history</h2>
-              <p className="text-muted-foreground mb-4">
+            <CardContent className="p-10 text-center">
+              <LogIn className="w-10 h-10 mx-auto text-muted-foreground/40 mb-4" />
+              <h2 className="text-lg font-semibold tracking-tight mb-1">Sign in to view history</h2>
+              <p className="text-sm text-muted-foreground mb-5">
                 Your analysis history will be saved when you're signed in.
               </p>
               <a href="/api/login">
                 <Button data-testid="button-login-history">
-                  <LogIn className="w-4 h-4 mr-2" />
+                  <LogIn className="w-4 h-4 mr-1.5" />
                   Sign In
                 </Button>
               </a>
@@ -321,45 +329,22 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between gap-4 h-16">
-            <div className="flex items-center gap-3">
-              <Shield className="w-8 h-8 text-primary" />
-              <div>
-                <h1 className="text-lg font-semibold">Ghost Job Detector</h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">
-                  Analysis History
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/">
-                <Button variant="outline" size="sm" data-testid="button-back-home">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back
-                </Button>
-              </Link>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      <PageHeader subtitle="History" />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold">Your Analysis History</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl font-semibold tracking-tight">Analysis History</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
             {user?.firstName ? `${user.firstName}'s` : "Your"} past job posting analyses
           </p>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12" data-testid="loading-analyses">
-            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <div className="flex items-center justify-center py-16" data-testid="loading-analyses">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : analyses && analyses.length > 0 ? (
-          <div className="space-y-3" data-testid="analyses-list">
+          <div className="space-y-2" data-testid="analyses-list">
             <AnimatePresence>
               {analyses.map((analysis) => (
                 <AnalysisCard
@@ -373,10 +358,10 @@ export default function History() {
           </div>
         ) : (
           <Card>
-            <CardContent className="p-8 text-center">
-              <Briefcase className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No analyses yet</h3>
-              <p className="text-muted-foreground mb-4">
+            <CardContent className="p-10 text-center">
+              <Briefcase className="w-10 h-10 mx-auto text-muted-foreground/40 mb-4" />
+              <h3 className="text-base font-medium mb-1">No analyses yet</h3>
+              <p className="text-sm text-muted-foreground mb-5">
                 Your job posting analyses will appear here.
               </p>
               <Link href="/">
