@@ -221,7 +221,8 @@ function RecommendationPanel({
   );
 }
 
-function RedFlagsSection({ flags }: { flags: RedFlag[] }) {
+function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
+
   const [openSections, setOpenSections] = useState<Set<RedFlagSeverity>>(
     new Set<RedFlagSeverity>(["critical", "high"])
   );
@@ -426,29 +427,29 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
         <AnalysisCategoryCard
           title="Content Analysis"
           icon={FileText}
-          score={result.detailedAnalysis.contentAnalysis.score}
-          flags={result.detailedAnalysis.contentAnalysis.flags}
+          score={result.detailedAnalysis?.contentAnalysis?.score ?? 0}
+          flags={result.detailedAnalysis?.contentAnalysis?.flags ?? []}
           delay={0.4}
         />
         <AnalysisCategoryCard
-          title="Company Verification"
-          icon={Building2}
-          score={result.detailedAnalysis.companyVerification.score}
-          flags={result.detailedAnalysis.companyVerification.flags}
-          delay={0.5}
+          title="Content Analysis"
+          icon={FileText}
+          score={result.detailedAnalysis?.contentAnalysis?.score ?? 0}
+          flags={result.detailedAnalysis?.contentAnalysis?.flags ?? []}
+          delay={0.4}
         />
         <AnalysisCategoryCard
           title="Posting Patterns"
           icon={Clock}
-          score={result.detailedAnalysis.postingPatterns.score}
-          flags={result.detailedAnalysis.postingPatterns.flags}
+          score={result.detailedAnalysis?.postingPatterns?.score ?? 0}
+          flags={result.detailedAnalysis?.postingPatterns?.flags ?? []}
           delay={0.6}
         />
         <AnalysisCategoryCard
           title="Communication"
           icon={MessageSquare}
-          score={result.detailedAnalysis.communication.score}
-          flags={result.detailedAnalysis.communication.flags}
+          score={result.detailedAnalysis?.communication?.score ?? 0}
+          flags={result.detailedAnalysis?.communication?.flags ?? []}
           delay={0.7}
         />
       </div>

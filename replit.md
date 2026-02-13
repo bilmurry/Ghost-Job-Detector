@@ -49,6 +49,15 @@ The core job analysis logic lives in `server/routes.ts` and uses pattern matchin
 - "Too good to be true" phrases
 - Vague job requirements
 - Urgent/pressure language
+- Resume harvesting detection:
+  - Talent pool/pipeline language (always hiring, future opportunities, evergreen roles)
+  - Direct resume submission requests without active opening
+  - Excessive personal data requests (SSN, bank details) before hiring
+- Compensation price point analysis:
+  - 36 job titles with median/low/high salary ranges
+  - Detects overpaying bait ($500k for data entry = critical)
+  - Detects exploitative underpaying ($15k for customer service = high)
+  - Flags vague compensation ("competitive salary", "depends on experience")
 - Enhanced email/domain verification:
   - 34 personal email domains (gmail, yahoo, international providers)
   - 20 disposable/temporary email domains (tempmail, mailinator, etc.)
@@ -56,6 +65,11 @@ The core job analysis logic lives in `server/routes.ts` and uses pattern matchin
   - Website vs email domain mismatch detection
   - Suspicious email patterns (auto-generated, numbered addresses)
   - Free subdomain service detection (wix, weebly, etc.)
+- Color-coded severity mapping:
+  - Critical (red): payment requests, scams, salary bait, disposable emails, SSN requests
+  - High (amber): resume harvesting, exploitative pay, personal emails, unrealistic promises
+  - Medium (orange): above/below market range, talent pool listings, vague compensation
+  - Low (green): short descriptions, minor formatting issues
 
 Analysis results include:
 - Ghost score (0-100)

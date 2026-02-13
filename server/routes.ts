@@ -68,6 +68,46 @@ const SUSPICIOUS_PATTERNS = {
     "work from home opportunity",
     "data entry from home",
   ],
+  resumeHarvestingIndicators: [
+    "send your resume to",
+    "submit your resume",
+    "forward your cv",
+    "email your resume",
+    "send resume and cover letter",
+    "attach your resume",
+    "reply with your resume",
+    "send your cv",
+  ],
+  resumeHarvestingPatterns: [
+    "always hiring",
+    "always looking",
+    "continuous recruitment",
+    "ongoing recruitment",
+    "talent pool",
+    "talent pipeline",
+    "future opportunities",
+    "future openings",
+    "building our team",
+    "general application",
+    "open application",
+    "evergreen position",
+    "evergreen role",
+    "rolling basis",
+    "no specific deadline",
+  ],
+  excessiveDataRequests: [
+    "social security",
+    "ssn",
+    "date of birth",
+    "bank account",
+    "driver's license number",
+    "passport number",
+    "credit card",
+    "mother's maiden name",
+    "bank details",
+    "routing number",
+    "account number",
+  ],
 };
 
 const PERSONAL_EMAIL_DOMAINS = [
@@ -130,29 +170,50 @@ const DISPOSABLE_EMAIL_DOMAINS = [
   "tempr.email",
 ];
 
-const MARKET_RATES: Record<string, number> = {
-  "software engineer": 120000,
-  "senior software engineer": 160000,
-  "marketing manager": 95000,
-  "sales representative": 65000,
-  "data analyst": 75000,
-  "product manager": 130000,
-  "project manager": 100000,
-  "customer service": 45000,
-  "administrative assistant": 42000,
-  "accountant": 65000,
-  "hr manager": 85000,
-  "graphic designer": 55000,
-  "web developer": 85000,
-  "nurse": 75000,
-  "teacher": 55000,
-  default: 70000,
+const MARKET_RATES: Record<string, { median: number; low: number; high: number }> = {
+  "software engineer": { median: 120000, low: 70000, high: 200000 },
+  "senior software engineer": { median: 160000, low: 120000, high: 250000 },
+  "staff engineer": { median: 200000, low: 160000, high: 350000 },
+  "principal engineer": { median: 220000, low: 170000, high: 400000 },
+  "engineering manager": { median: 180000, low: 130000, high: 300000 },
+  "marketing manager": { median: 95000, low: 55000, high: 150000 },
+  "marketing coordinator": { median: 50000, low: 35000, high: 70000 },
+  "sales representative": { median: 65000, low: 35000, high: 120000 },
+  "sales manager": { median: 100000, low: 60000, high: 180000 },
+  "data analyst": { median: 75000, low: 50000, high: 120000 },
+  "data scientist": { median: 130000, low: 85000, high: 200000 },
+  "data engineer": { median: 140000, low: 90000, high: 210000 },
+  "product manager": { median: 130000, low: 80000, high: 220000 },
+  "project manager": { median: 100000, low: 60000, high: 160000 },
+  "customer service": { median: 40000, low: 28000, high: 55000 },
+  "administrative assistant": { median: 42000, low: 30000, high: 58000 },
+  "executive assistant": { median: 60000, low: 42000, high: 85000 },
+  "accountant": { median: 65000, low: 45000, high: 95000 },
+  "hr manager": { median: 85000, low: 55000, high: 130000 },
+  "recruiter": { median: 65000, low: 40000, high: 100000 },
+  "graphic designer": { median: 55000, low: 35000, high: 85000 },
+  "ux designer": { median: 95000, low: 60000, high: 150000 },
+  "web developer": { median: 85000, low: 50000, high: 140000 },
+  "frontend developer": { median: 100000, low: 60000, high: 160000 },
+  "backend developer": { median: 110000, low: 65000, high: 175000 },
+  "full stack developer": { median: 110000, low: 60000, high: 170000 },
+  "devops engineer": { median: 130000, low: 80000, high: 200000 },
+  "nurse": { median: 75000, low: 50000, high: 110000 },
+  "registered nurse": { median: 80000, low: 55000, high: 115000 },
+  "teacher": { median: 55000, low: 35000, high: 80000 },
+  "data entry": { median: 35000, low: 25000, high: 48000 },
+  "warehouse": { median: 38000, low: 28000, high: 52000 },
+  "intern": { median: 40000, low: 0, high: 70000 },
+  "entry level": { median: 45000, low: 28000, high: 65000 },
+  "cashier": { median: 28000, low: 22000, high: 38000 },
+  "retail": { median: 32000, low: 24000, high: 45000 },
+  default: { median: 70000, low: 35000, high: 130000 },
 };
 
-function getMarketRate(title: string): number {
+function getMarketRate(title: string): { median: number; low: number; high: number } {
   const lowerTitle = title.toLowerCase();
   for (const [key, rate] of Object.entries(MARKET_RATES)) {
-    if (lowerTitle.includes(key)) {
+    if (key !== "default" && lowerTitle.includes(key)) {
       return rate;
     }
   }
@@ -219,22 +280,85 @@ function analyzeContent(job: JobPosting): { score: number; flags: string[] } {
 
   if (job.salary) {
     const marketRate = getMarketRate(job.title);
-    if (job.salary > marketRate * 2) {
+    const salaryFormatted = `$${job.salary.toLocaleString()}`;
+    const medianFormatted = `$${marketRate.median.toLocaleString()}`;
+    const rangeFormatted = `$${marketRate.low.toLocaleString()}-$${marketRate.high.toLocaleString()}`;
+
+    if (job.salary > marketRate.high * 1.5) {
       score += 25;
       flags.push(
-        `Salary ($${job.salary.toLocaleString()}) is 100%+ above market rate ($${marketRate.toLocaleString()})`
+        `Salary (${salaryFormatted}) is far above market range (${rangeFormatted}) - likely bait`
       );
-    } else if (job.salary > marketRate * 1.5) {
-      score += 15;
+    } else if (job.salary > marketRate.high) {
+      score += 12;
       flags.push(
-        `Salary ($${job.salary.toLocaleString()}) is 50%+ above market rate ($${marketRate.toLocaleString()})`
+        `Salary (${salaryFormatted}) is above typical market ceiling (${rangeFormatted})`
       );
-    } else if (job.salary > marketRate * 1.3) {
-      score += 8;
+    } else if (job.salary > 0 && job.salary < marketRate.low * 0.6) {
+      score += 18;
       flags.push(
-        `Salary appears above typical market rate`
+        `Salary (${salaryFormatted}) is well below market floor (${rangeFormatted}) - possible exploitative offer`
+      );
+    } else if (job.salary > 0 && job.salary < marketRate.low) {
+      score += 10;
+      flags.push(
+        `Salary (${salaryFormatted}) is below typical market range (${rangeFormatted})`
       );
     }
+  } else {
+    const descLower = job.description.toLowerCase();
+    if (descLower.includes("competitive salary") || descLower.includes("competitive compensation") || descLower.includes("competitive pay")) {
+      score += 3;
+      flags.push("Uses vague 'competitive salary' without specifying compensation");
+    }
+    if (descLower.includes("doe") || descLower.includes("depends on experience") || descLower.includes("commensurate with experience")) {
+      score += 5;
+      flags.push("Salary listed as 'depends on experience' without a range - common in ghost listings");
+    }
+  }
+
+  // Resume harvesting detection
+  let harvestIndicatorCount = 0;
+  for (const keyword of SUSPICIOUS_PATTERNS.resumeHarvestingIndicators) {
+    if (fullText.includes(keyword)) {
+      harvestIndicatorCount++;
+    }
+  }
+
+  let harvestPatternCount = 0;
+  for (const keyword of SUSPICIOUS_PATTERNS.resumeHarvestingPatterns) {
+    if (fullText.includes(keyword)) {
+      harvestPatternCount++;
+    }
+  }
+
+  if (harvestPatternCount >= 2) {
+    score += 20;
+    flags.push("Multiple signs this posting may exist to collect resumes rather than fill a real position");
+  } else if (harvestPatternCount === 1 && harvestIndicatorCount >= 1) {
+    score += 15;
+    flags.push("Shows signs of resume harvesting - may not be a real open position");
+  } else if (harvestPatternCount === 1) {
+    score += 8;
+    flags.push("Posting language suggests this may be a pipeline/talent pool listing rather than an active opening");
+  } else if (harvestIndicatorCount >= 2) {
+    score += 10;
+    flags.push("Multiple requests to submit resume directly - may indicate resume harvesting");
+  }
+
+  // Excessive personal data requests before hiring
+  let dataRequestCount = 0;
+  for (const keyword of SUSPICIOUS_PATTERNS.excessiveDataRequests) {
+    if (fullText.includes(keyword)) {
+      dataRequestCount++;
+    }
+  }
+  if (dataRequestCount >= 2) {
+    score += 25;
+    flags.push("Requests sensitive personal information (SSN, bank details, etc.) upfront - major red flag");
+  } else if (dataRequestCount === 1) {
+    score += 15;
+    flags.push("Requests sensitive personal information before hiring - unusual for legitimate postings");
   }
 
   const exclamationCount = (job.description.match(/!/g) || []).length;
@@ -249,7 +373,7 @@ function analyzeContent(job: JobPosting): { score: number; flags: string[] } {
     flags.push("Excessive use of ALL CAPS text");
   }
 
-  return { score: Math.min(score, 80), flags };
+  return { score: Math.min(score, 90), flags };
 }
 
 function analyzeEmail(email: string, companyName: string): { score: number; flags: string[] } {
@@ -530,18 +654,35 @@ function analyzeJobPosting(job: JobPosting): AnalysisResult {
   ) => {
     for (const flag of flags) {
       let severity = baseSeverity;
+      const flagLower = flag.toLowerCase();
       if (
-        flag.toLowerCase().includes("payment") ||
-        flag.toLowerCase().includes("scam") ||
-        flag.toLowerCase().includes("100%+")
+        flagLower.includes("payment") ||
+        flagLower.includes("scam") ||
+        flagLower.includes("far above market") ||
+        (flagLower.includes("sensitive personal information") && flagLower.includes("ssn")) ||
+        flagLower.includes("disposable/temporary email")
       ) {
         severity = "critical";
       } else if (
-        flag.toLowerCase().includes("immediate") ||
-        flag.toLowerCase().includes("unrealistic") ||
-        flag.toLowerCase().includes("personal email")
+        flagLower.includes("immediate") ||
+        flagLower.includes("unrealistic") ||
+        flagLower.includes("personal email") ||
+        flagLower.includes("resume harvesting") ||
+        flagLower.includes("collect resumes") ||
+        flagLower.includes("well below market") ||
+        flagLower.includes("exploitative") ||
+        flagLower.includes("sensitive personal information") ||
+        flagLower.includes("likely bait")
       ) {
         severity = "high";
+      } else if (
+        flagLower.includes("above typical market") ||
+        flagLower.includes("below typical market") ||
+        flagLower.includes("pipeline") ||
+        flagLower.includes("talent pool") ||
+        flagLower.includes("depends on experience")
+      ) {
+        severity = "medium";
       }
       allFlags.push({ severity, message: flag, category });
     }
