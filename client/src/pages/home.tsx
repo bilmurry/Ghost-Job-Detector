@@ -421,7 +421,10 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
                 className="mt-4"
                 data-testid="badge-risk-level"
               >
-                {result.riskLevel.replace("-", " ").toUpperCase()} RISK
+                {(result?.riskLevel || "unknown")
+                  .replace("-", " ")
+                  .toUpperCase()}{" "}
+                RISK
               </Badge>
             </CardContent>
           </Card>
@@ -810,7 +813,7 @@ export default function Home() {
   const analyzeMutation = useMutation({
     mutationFn: async (data: JobPosting) => {
       const response = await apiRequest("POST", "/api/analyze", data);
-      return response as unknown as AnalysisResult;
+      return (await response.json()) as AnalysisResult;
     },
     onSuccess: (data) => {
       setResult(data);
