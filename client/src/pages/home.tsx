@@ -36,13 +36,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -498,10 +491,6 @@ function JobInputForm({
       salary: undefined,
       requirements: "",
       contactEmail: "",
-      companyWebsite: "",
-      postingDate: "",
-      contactMethod: undefined,
-      responseTime: undefined,
     },
   });
 
@@ -519,9 +508,6 @@ function JobInputForm({
     form.setValue("salary", 150000);
     form.setValue("requirements", "Must be 18+ and have internet access. Anyone can apply!");
     form.setValue("contactEmail", "opportunities123@gmail.com");
-    form.setValue("companyWebsite", "");
-    form.setValue("contactMethod", "text_only");
-    form.setValue("responseTime", 0.5);
   };
 
   return (
@@ -686,97 +672,6 @@ function JobInputForm({
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="postingDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Posting Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          {...field}
-                          data-testid="input-posting-date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="companyWebsite"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Website</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="https://..."
-                            {...field}
-                            data-testid="input-website"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="contactMethod"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Contact Method</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger data-testid="select-contact-method">
-                              <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="email">Email</SelectItem>
-                            <SelectItem value="phone">Phone</SelectItem>
-                            <SelectItem value="text_only">Text Only</SelectItem>
-                            <SelectItem value="in_person">In Person</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="responseTime"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Response Time (hrs)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.5"
-                            placeholder="e.g., 24"
-                            {...field}
-                            value={field.value ?? ""}
-                            onChange={(e) =>
-                              field.onChange(
-                                e.target.value ? Number(e.target.value) : undefined
-                              )
-                            }
-                            data-testid="input-response-time"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
 
                 <Button
                   type="submit"
