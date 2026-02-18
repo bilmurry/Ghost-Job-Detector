@@ -82,10 +82,10 @@ Analysis results include:
 - **Provider**: OpenAI via Replit AI Integrations (no separate API key needed)
 - **Model**: gpt-5-mini for job analysis
 - **File**: `server/ghostAI.ts` - AI analysis function with structured JSON output
-- **Merging Strategy**: Rule-based analysis (40% weight) + AI analysis (60% weight)
-  - Duplicate red flags are deduplicated by message text
-  - AI provides richer, context-aware recommendations
-  - Falls back to rule-based only if AI call fails
+- **Strategy**: AI is the primary scoring engine; rule-based analysis is fallback only
+  - AI returns full AnalysisResult including detailedAnalysis breakdown
+  - If AI throws, falls back to rule-based `analyzeJobPosting()`
+  - ghostAI.ts throws errors (no silent null returns)
 - **Environment Variables**: AI_INTEGRATIONS_OPENAI_API_KEY, AI_INTEGRATIONS_OPENAI_BASE_URL
 
 ### Data Flow
