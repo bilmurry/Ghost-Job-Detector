@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 340px;
+      padding: 20px;
+      background: #111418;
+      color: #E6E8EB;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .header svg { flex-shrink: 0; }
+    .header h1 {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8B8D94;
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      background: #1C1F26;
+      border: 1px solid #2A2D35;
+      border-radius: 6px;
+      color: #E6E8EB;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #4A8CFF; }
+    input::placeholder { color: #555960; }
+    .hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #6B6E76;
+      line-height: 1.4;
+    }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 8px;
+      background: #2563EB;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #1D4FD7; }
+    .status {
+      margin-top: 10px;
+      font-size: 11px;
+      text-align: center;
+      min-height: 16px;
+    }
+    .status.success { color: #34D399; }
+    .status.error { color: #F87171; }
+    .divider {
+      height: 1px;
+      background: #2A2D35;
+      margin: 16px 0;
+    }
+    .info {
+      font-size: 11px;
+      color: #6B6E76;
+      line-height: 1.5;
+    }
+    .info strong { color: #8B8D94; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A8CFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <path d="m9 12 2 2 4-4"/>
+    </svg>
+    <h1>Ghost Job Detector</h1>
+  </div>
+
+  <label for="api-url">API Endpoint URL</label>
+  <input type="url" id="api-url" placeholder="https://your-app.replit.app" />
+  <div class="hint">Enter the URL where your Ghost Job Detector app is published.</div>
+
+  <button id="save-btn">Save</button>
+  <div class="status" id="status"></div>
+
+  <div class="divider"></div>
+
+  <div class="info">
+    <strong>Supported sites:</strong><br>
+    LinkedIn, Indeed, Glassdoor, ZipRecruiter<br><br>
+    Navigate to any job posting on these sites and click the shield button to analyze.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -97,6 +97,22 @@ The fallback analysis logic lives in `server/routes.ts` and uses pattern matchin
 - `lucide-react`: Icon library
 - `wouter`: Client-side routing
 
+### Chrome Extension (Browser Extension)
+- **Directory**: `/extension/` - self-contained Chrome MV3 extension
+- **Purpose**: Analyze job postings directly on LinkedIn, Indeed, Glassdoor, ZipRecruiter
+- **Architecture**: Content script + background service worker + settings popup
+- **Files**:
+  - `manifest.json` - MV3 manifest with host permissions for job sites
+  - `content.js` - Floating button injection, DOM scraping, results panel
+  - `background.js` - Message relay for API calls (avoids CORS in content script)
+  - `popup.html/popup.js` - Settings UI for configuring API endpoint URL
+  - `styles.css` - Dark-themed panel and button styles
+  - `icons/` - Extension icons (16/48/128px)
+- **Scraping**: Site-specific selectors for LinkedIn, Indeed, Glassdoor, ZipRecruiter + generic fallback
+- **API**: Sends scraped data to configured Ghost Job Detector `/api/analyze` endpoint
+- **CORS**: Backend has CORS headers on `/api/analyze` to allow extension requests
+- **Installation**: Load unpacked in Chrome (chrome://extensions > Developer mode > Load unpacked > select /extension folder)
+
 ### Development Tools
 - Replit-specific Vite plugins (error overlay, cartographer, dev banner)
 - esbuild for production server bundling with dependency allowlist

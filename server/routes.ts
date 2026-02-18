@@ -734,7 +734,36 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  function isAllowedOrigin(origin: string | undefined): boolean {
+    if (!origin) return false;
+    if (origin.startsWith("chrome-extension://")) return true;
+    if (origin.startsWith("moz-extension://")) return true;
+    try {
+      const host = new URL(origin).hostname;
+      return host === "localhost" || host.endsWith(".replit.app") || host.endsWith(".repl.co") || host.endsWith(".replit.dev");
+    } catch {
+      return false;
+    }
+  }
+
+  function setCorsHeaders(req: any, res: any) {
+    const origin = req.headers.origin;
+    if (isAllowedOrigin(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    }
+  }
+
+  app.options("/api/analyze", (req, res) => {
+    setCorsHeaders(req, res);
+    res.setHeader("Access-Control-Max-Age", "86400");
+    res.status(204).end();
+  });
+
   app.post("/api/analyze", async (req: any, res) => {
+    setCorsHeaders(req, res);
+
     try {
       const parseResult = jobPostingSchema.safeParse(req.body);
       
