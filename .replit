@@ -14,3 +14,6 @@ externalPort = 80
 [env]
 PORT = "5000"
 NODE_ENV = "development"
+
+[agent]
+integrations = ["javascript_openai_ai_integrations:2.0.0"]

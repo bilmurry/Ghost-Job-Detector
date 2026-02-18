@@ -745,16 +745,74 @@ export async function registerRoutes(
         });
       }
 
-            const ruleBasedResult = analyzeJobPosting(parseResult.data);
+      const ruleBasedResult = analyzeJobPosting(parseResult.data);
 
-            const aiRaw = await analyzeJobWithAI(
-              `${parseResult.data.description} ${parseResult.data.requirements || ""}`
-            );
+      const aiResult = await analyzeJobWithAI(parseResult.data);
 
-            console.log("AI RESULT:", aiRaw);
+      let result = ruleBasedResult;
 
-            // For now, keep existing result
-            const result = ruleBasedResult;
+      if (aiResult) {
+        const existingMessages = new Set(
+          ruleBasedResult.redFlags.map((f) => f.message.toLowerCase())
+        );
+        const newAIFlags = aiResult.redFlags.filter(
+          (f) => !existingMessages.has(f.message.toLowerCase())
+        );
+
+        const mergedFlags = [...ruleBasedResult.redFlags, ...newAIFlags];
+
+        const mergedScore = Math.round(
+          ruleBasedResult.ghostScore * 0.4 + aiResult.ghostScore * 0.6
+        );
+        const mergedConfidence = Math.round(
+          ruleBasedResult.confidence * 0.3 + aiResult.confidence * 0.7
+        );
+
+        const aiCategoryFlags = {
+          content: newAIFlags.filter((f) => f.category === "content").map((f) => f.message),
+          company: newAIFlags.filter((f) => f.category === "company").map((f) => f.message),
+          patterns: newAIFlags.filter((f) => f.category === "patterns").map((f) => f.message),
+          communication: newAIFlags.filter((f) => f.category === "communication").map((f) => f.message),
+        };
+
+        result = {
+          ghostScore: Math.min(100, mergedScore),
+          confidence: Math.min(100, mergedConfidence),
+          recommendation: aiResult.recommendation,
+          riskLevel: getRiskLevel(mergedScore),
+          redFlags: mergedFlags,
+          detailedAnalysis: {
+            contentAnalysis: {
+              score: ruleBasedResult.detailedAnalysis.contentAnalysis.score,
+              flags: [
+                ...ruleBasedResult.detailedAnalysis.contentAnalysis.flags,
+                ...aiCategoryFlags.content,
+              ],
+            },
+            companyVerification: {
+              score: ruleBasedResult.detailedAnalysis.companyVerification.score,
+              flags: [
+                ...ruleBasedResult.detailedAnalysis.companyVerification.flags,
+                ...aiCategoryFlags.company,
+              ],
+            },
+            postingPatterns: {
+              score: ruleBasedResult.detailedAnalysis.postingPatterns.score,
+              flags: [
+                ...ruleBasedResult.detailedAnalysis.postingPatterns.flags,
+                ...aiCategoryFlags.patterns,
+              ],
+            },
+            communication: {
+              score: ruleBasedResult.detailedAnalysis.communication.score,
+              flags: [
+                ...ruleBasedResult.detailedAnalysis.communication.flags,
+                ...aiCategoryFlags.communication,
+              ],
+            },
+          },
+        };
+      }
       
       // Save analysis if user is authenticated
       if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {

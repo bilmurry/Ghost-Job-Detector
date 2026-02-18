@@ -78,13 +78,24 @@ Analysis results include:
 - Categorized red flags with severity levels
 - Detailed breakdown by category (content, company, patterns, communication)
 
+### AI Integration
+- **Provider**: OpenAI via Replit AI Integrations (no separate API key needed)
+- **Model**: gpt-5-mini for job analysis
+- **File**: `server/ghostAI.ts` - AI analysis function with structured JSON output
+- **Merging Strategy**: Rule-based analysis (40% weight) + AI analysis (60% weight)
+  - Duplicate red flags are deduplicated by message text
+  - AI provides richer, context-aware recommendations
+  - Falls back to rule-based only if AI call fails
+- **Environment Variables**: AI_INTEGRATIONS_OPENAI_API_KEY, AI_INTEGRATIONS_OPENAI_BASE_URL
+
 ### Data Flow
 1. User submits job posting data via form
 2. Frontend validates with Zod schema
 3. POST request to /api/analyze endpoint
-4. Server performs pattern-based analysis
-5. Returns structured AnalysisResult
-6. Frontend displays color-coded results with recommendations
+4. Server runs rule-based pattern analysis AND AI analysis in parallel
+5. Results are merged: scores weighted, red flags deduplicated, AI recommendation used
+6. Returns structured AnalysisResult
+7. Frontend displays color-coded results with recommendations
 
 ## External Dependencies
 
