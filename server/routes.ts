@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { analysisStorage } from "./storage";
+import { analyzeJobWithAI } from "./ghostAI";
 
 const SUSPICIOUS_PATTERNS = {
   paymentKeywords: [
@@ -744,7 +745,16 @@ export async function registerRoutes(
         });
       }
 
-      const result = analyzeJobPosting(parseResult.data);
+            const ruleBasedResult = analyzeJobPosting(parseResult.data);
+
+            const aiRaw = await analyzeJobWithAI(
+              `${parseResult.data.description} ${parseResult.data.requirements || ""}`
+            );
+
+            console.log("AI RESULT:", aiRaw);
+
+            // For now, keep existing result
+            const result = ruleBasedResult;
       
       // Save analysis if user is authenticated
       if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
