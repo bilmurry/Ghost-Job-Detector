@@ -1,8 +1,6 @@
 # Ghost Job Detector
 
-AI-powered job posting credibility analyzer designed to identify suspicious, inactive, or misleading job listings before candidates waste time applying.
-
-Ghost Job Detector evaluates structured job attributes and surfaces risk indicators commonly associated with “ghost jobs” — postings that appear active but lack genuine hiring intent.
+AI-powered job posting analyzer that identifies ghost jobs, scam listings, and misleading postings before candidates waste time applying.
 
 ---
 
@@ -10,12 +8,11 @@ Ghost Job Detector evaluates structured job attributes and surfaces risk indicat
 
 The modern job market contains a growing number of listings that:
 
-- Remain posted despite inactive hiring
-- Collect resumes without immediate roles available
-- Contain vague or recycled descriptions
-- Lack verifiable contact or transparency
-
-These listings distort labor market signals, waste applicant time, and reduce trust in hiring platforms.
+- Remain posted despite inactive hiring ("ghost jobs")
+- Collect resumes without any real role available
+- Request upfront payments or excessive personal data
+- Contain vague, recycled, or misleading descriptions
+- Use urgency tactics and unrealistic promises
 
 Job seekers currently have no structured way to assess listing credibility before applying.
 
@@ -23,64 +20,125 @@ Job seekers currently have no structured way to assess listing credibility befor
 
 ## The Solution
 
-Ghost Job Detector analyzes job posting data and applies heuristic validation logic to produce:
+Ghost Job Detector uses AI-powered analysis to evaluate job postings and produce:
 
-- Risk score
-- Confidence level
-- Categorized warning indicators
-- Actionable recommendations
-
-Instead of blindly submitting applications, users receive structured feedback about potential red flags.
+- **Risk Score** (0-100) with color-coded severity
+- **Confidence Level** indicating assessment reliability
+- **Categorized Red Flags** across content, company, patterns, and communication
+- **Actionable Recommendations** explaining what to watch for
 
 ---
 
 ## How It Works
 
-1. User submits job posting details
-2. Backend applies validation rules and scoring logic
-3. Risk indicators are evaluated across multiple dimensions
-4. A credibility assessment is returned in structured format
+1. User submits job posting details (title, company, description, salary, etc.)
+2. AI analyzes the posting for ghost job indicators, scam patterns, and red flags
+3. If AI is unavailable, a comprehensive rule-based engine provides fallback analysis
+4. Results are displayed with color-coded severity and detailed breakdowns
 
-The scoring model evaluates signals such as:
-- Compensation clarity
-- Posting metadata consistency
-- Contact transparency
-- Description quality
-- Structural anomalies
+### What Gets Detected
+
+- **Payment scams**: Upfront fees, training material costs, deposit requests
+- **MLM/pyramid schemes**: Multi-level marketing language, "unlimited income" promises
+- **Resume harvesting**: Talent pool listings, excessive data collection, evergreen postings
+- **Salary anomalies**: Unrealistic compensation, exploitative underpayment
+- **Suspicious contacts**: Disposable emails, personal email domains, domain mismatches
+- **Ghost job patterns**: Vague descriptions, urgency tactics, "always hiring" language
 
 ---
 
-## System Architecture
+## Tech Stack
 
 ### Frontend
-
 - React 18 with TypeScript
-- Wouter (lightweight routing)
-- TanStack Query (React Query) for server state
+- Tailwind CSS + shadcn/ui components
+- Apple-inspired design (SF Pro font stack, metallic palette, frosted glass effects)
+- Framer Motion animations
+- TanStack Query for server state
 - React Hook Form with Zod validation
-- Tailwind CSS with shadcn/ui components
-- Framer Motion for UI transitions
-- Vite build tooling
 
 ### Backend
+- Node.js + Express (TypeScript)
+- OpenAI integration via Replit AI Integrations (gpt-5-mini)
+- Rule-based fallback analysis engine
+- Zod schema validation shared with frontend
 
-- Node.js + Express
-- REST API architecture
-- Authentication layer
-- Structured scoring logic engine
+### Database & Auth
+- PostgreSQL (Neon-backed via Replit)
+- Drizzle ORM with migration support
+- Replit Auth for user authentication
+- Analysis history with per-user access control
 
 ---
 
-## API Response Structure (Example)
+## API
 
+### POST /api/analyze
+
+Analyze a job posting for red flags and ghost job indicators.
+
+**Request:**
 ```json
 {
-  "riskScore": 72,
-  "confidence": "High",
-  "flags": [
-    "Salary range missing",
-    "Generic job description",
-    "No direct company contact provided"
-  ],
-  "recommendation": "Proceed with caution and verify employer legitimacy before applying."
+  "title": "Marketing Manager",
+  "company": "Success LLC",
+  "description": "Make $150,000+ working 10 hours per week...",
+  "salary": 150000,
+  "requirements": "Must be 18+",
+  "contactEmail": "opportunities123@gmail.com"
 }
+```
+
+**Response:**
+```json
+{
+  "ghostScore": 90,
+  "confidence": 93,
+  "riskLevel": "high",
+  "recommendation": "Do not send money or personal documents; treat this listing as a likely scam.",
+  "redFlags": [
+    {
+      "severity": "critical",
+      "message": "Listing requires an upfront payment — legitimate employers do not ask candidates to pay.",
+      "category": "content"
+    }
+  ],
+  "detailedAnalysis": {
+    "contentAnalysis": { "score": 35, "flags": ["..."] },
+    "companyVerification": { "score": 20, "flags": ["..."] },
+    "postingPatterns": { "score": 15, "flags": ["..."] },
+    "communication": { "score": 10, "flags": ["..."] }
+  }
+}
+```
+
+### GET /api/analyses
+Returns authenticated user's analysis history.
+
+### GET /api/analyses/:id
+Returns a single analysis (user-scoped).
+
+### DELETE /api/analyses/:id
+Deletes an analysis (user-scoped).
+
+---
+
+## Running Locally
+
+```bash
+npm install
+npm run dev
+```
+
+The app runs on port 5000 with Vite HMR for frontend and tsx for backend.
+
+---
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `SESSION_SECRET` | Express session encryption key |
+| `AI_INTEGRATIONS_OPENAI_API_KEY` | OpenAI API key (auto-provided by Replit) |
+| `AI_INTEGRATIONS_OPENAI_BASE_URL` | OpenAI base URL (auto-provided by Replit) |

@@ -1,186 +1,208 @@
-# Ghost Job Detector - Design Guidelines
+# Ghost Job Detector - Design Document
 
-## Design Approach
+## Design Philosophy
 
-**Selected Framework:** Material Design-inspired system  
-**Rationale:** Utility-focused application requiring clear information hierarchy, strong visual feedback for risk levels, and efficient data presentation. Material Design provides excellent patterns for forms, cards, and alert systems.
+**Design System:** Apple-inspired minimalist aesthetic
+**Rationale:** A utility-focused application requiring trust, clarity, and precision. The Apple design language communicates authority and sophistication, making users feel confident in the analysis results. Clean surfaces, refined typography, and restrained color usage let the data speak for itself.
 
 **Core Principles:**
-- Trust through clarity: Professional, confident presentation of analysis results
+- Trust through precision: Clean, confident presentation of analysis results
 - Immediate comprehension: Color-coded risk levels with clear visual hierarchy
 - Scannable information: Organized red flags and recommendations
-- Guided user journey: Intuitive flow from input to insights
+- Quiet confidence: Let the content lead, not the chrome
 
 ---
 
 ## Typography
 
-**Font Family:** Inter (Google Fonts) for interface text  
+**Font Stack:** SF Pro-like system font stack
+```
+-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif
+```
+
+**Characteristics:**
+- Tight letter-spacing (tracking-tight on headings)
+- Uppercase labels with tracking-wider for form fields and section headers
+- Tabular numerals (font-variant-numeric: tabular-nums) for scores and percentages
+- Light font weights for large display text, medium/semibold for labels
+
 **Hierarchy:**
-- H1 (Page Title): 2.5rem (40px), font-weight 700
-- H2 (Section Headers): 1.75rem (28px), font-weight 600
-- H3 (Card Titles): 1.25rem (20px), font-weight 600
-- Body Text: 1rem (16px), font-weight 400
-- Small Text (Labels): 0.875rem (14px), font-weight 500
-- Risk Score Display: 3rem (48px), font-weight 700
+- Hero Heading: text-4xl/5xl, font-bold, tracking-tight
+- Section Headers: text-lg, font-semibold, tracking-tight
+- Form Labels: text-xs, font-medium, uppercase, tracking-wider, muted-foreground
+- Body Text: text-sm, font-normal
+- Risk Score Display: text-6xl, font-bold, tabular-nums
+- Confidence/Stats: text-2xl, font-semibold, tabular-nums
+
+---
+
+## Color System
+
+### Light Mode (Silver/Metallic)
+- **Background**: Cool gray-white (0 0% 98%)
+- **Card surfaces**: Pure white (0 0% 100%)
+- **Primary accent**: Deep blue-gray (220 15% 25%)
+- **Muted text**: Medium gray (220 10% 46%)
+- **Borders**: Subtle gray (220 13% 91%)
+
+### Dark Mode (Space Gray/Black)
+- **Background**: Near-black (220 15% 8%)
+- **Card surfaces**: Dark charcoal (220 15% 12%)
+- **Primary accent**: Light silver (220 10% 90%)
+- **Muted text**: Medium silver (220 10% 55%)
+- **Borders**: Subtle dark (220 13% 18%)
+
+### Severity Colors (Both Modes)
+- **Critical**: Red (0 84% 60%) - payment requests, scams, disposable emails
+- **High**: Amber (38 92% 50%) - resume harvesting, exploitative pay, unrealistic promises
+- **Medium**: Orange (25 95% 53%) - market range issues, talent pool listings
+- **Low**: Emerald (142 71% 45%) - minor formatting issues, short descriptions
 
 ---
 
 ## Layout System
 
-**Spacing Units:** Tailwind units of 2, 4, 6, 8, 12, 16, 20, 24  
-**Container:** max-w-6xl centered with px-4 sm:px-6 lg:px-8  
-**Grid System:** 12-column grid with gap-6 for card layouts
+**Spacing:** Consistent use of Tailwind spacing scale (2, 3, 4, 5, 6, 8)
+**Container:** max-w-4xl centered with responsive padding
+**Border Radius:** rounded-md (small, consistent)
 
 **Page Structure:**
-- Header: py-6 with logo and tagline
-- Hero/Input Section: py-12 with centered form (max-w-3xl)
-- Results Section: py-16 with multi-card layout
-- Footer: py-8 with links and disclaimer
+- Header: Frosted glass effect (backdrop-blur-xl, bg-background/80), sticky, h-14
+- Main Content: Centered column, max-w-4xl, py-8 to py-12
+- No footer (minimal approach)
 
 ---
 
-## Component Library
+## Component Patterns
 
-### Input Form
-- Large, prominent card with shadow-lg and rounded-xl
-- Two-tab interface: "Analyze URL" and "Manual Entry"
-- Input fields with floating labels, border-2 on focus
-- Primary CTA button: Large (h-14), rounded-lg, full-width on mobile
-- Helper text below fields explaining each input
+### Header
+- Frosted glass with backdrop blur
+- ShieldCheck icon + "Ghost Job Detector" wordmark
+- Right-aligned auth controls and dark mode toggle
+- Sticky positioning with high z-index
 
-### Risk Score Dashboard
-- Hero card displaying numerical score (0-100)
-- Circular progress indicator or large bold number
-- Color-coded background: Red (70+), Yellow (50-69), Orange (30-49), Green (<30)
-- Risk level badge and recommendation prominently displayed
+### Job Input Form
+- Single Card component with CardHeader/CardContent
+- Two-tab interface: "Manual Entry" and "From URL" (URL tab disabled/coming soon)
+- Form fields: Job Title, Company, Description, Salary, Requirements, Contact Email
+- Labels: Uppercase, xs size, tracking-wider, muted color
+- "Load Example" button in card header for demo data
+- Full-width "Analyze Posting" submit button
 
-### Red Flags Section
-- Grouped cards by severity level (Critical, High, Medium, Low)
-- Each flag as a list item with icon and description
-- Severity indicators with colored left border accent
-- Expandable details for each flag category
+### Results View
+- Animated entrance via Framer Motion (fade + slide up)
+- "New Analysis" button in header when results are showing
 
-### Analysis Breakdown Cards
-- Grid layout: 2 columns on desktop, stack on mobile
-- Four cards: Content Analysis, Company Verification, Posting Patterns, Communication
-- Each showing sub-score and top flags
-- Icon representing each category
+**Risk Score Circle:**
+- Large centered circular indicator with SVG ring
+- Score number (text-6xl, tabular-nums) in center
+- Ring color matches risk level severity
+- Risk level badge below (uppercase, tracking-wider)
 
-### Recommendation Panel
-- Prominent alert-style component at top of results
-- Large emoji/icon indicator
-- Bold action-oriented text
-- Secondary text explaining reasoning
+**Stats Row:**
+- Three-column grid: Confidence %, Red Flags count, Risk Level
+- Each in a subtle card with icon, label, and value
+- Tabular numbers for all numeric values
 
-### Navigation
-- Simple top bar with logo/title
-- "New Analysis" button always accessible
-- No complex menu needed
+**Recommendation Panel:**
+- Full-width Card with quote-style presentation
+- AI-generated actionable advice text
 
----
+**Detected Issues Section:**
+- Collapsible accordion by category (Content, Company, Patterns, Communication)
+- Each category shows flag count badge
+- Individual flags listed with severity-colored indicators
+- Severity badge (CRITICAL/HIGH/MEDIUM/LOW) next to each flag message
 
-## Visual Patterns
-
-**Cards:**
-- background: white with subtle border
-- border-radius: rounded-xl (12px)
-- shadow: shadow-md default, shadow-lg on hover
-- padding: p-6 to p-8
-
-**Risk Level Colors:**
-- High Risk: Red accents (borders, backgrounds at 10% opacity)
-- Medium Risk: Yellow/amber accents
-- Low-Medium Risk: Orange accents
-- Low Risk: Green accents
-
-**Buttons:**
-- Primary: Solid background, h-12, px-8, rounded-lg
-- Secondary: Outline style with border-2
-- Ghost: Text-only with hover background
-
-**Form Elements:**
-- Input fields: h-12, rounded-lg, border-2, px-4
-- Focus state: Ring-2 with offset
-- Textareas: min-h-32 for descriptions
-- Select dropdowns: Matching input styling
-
-**Icons:**
-- Use Heroicons via CDN
-- Size: w-5 h-5 for inline icons, w-8 h-8 for section headers
-- Consistent stroke-width: 2
-
----
-
-## Page Layout Details
-
-**Hero Section (Input Area):**
-- Centered content with max-w-3xl
-- Headline explaining the tool's purpose
-- Subtext about detection capabilities
-- Form card with subtle elevation
-- Background: Clean, minimal (no image needed - focus on utility)
-
-**Results Layout:**
-- Risk Score Dashboard: Full-width prominent card at top
-- Recommendation Panel: Below score, full-width
-- Analysis Grid: 2x2 grid of category cards
-- Red Flags Accordion: Full-width expandable sections
-- Detailed Breakdown: Expandable technical details at bottom
-
-**Mobile Adaptations:**
-- Stack all cards to single column
-- Maintain generous padding (px-4)
-- Risk score remains prominent but adjusts to mobile viewport
-- Collapsible sections for red flags to manage vertical space
+### History Page
+- List of past analyses (requires authentication)
+- Each entry shows job title, company, score, risk badge, date
+- Delete capability per entry
 
 ---
 
 ## Interactive States
 
-**Form Validation:**
-- Real-time validation with inline error messages
-- Success state with checkmark icon
-- Loading state during analysis with spinner
+**Loading:**
+- Spinner animation during AI analysis (can take 5-15 seconds)
+- Disabled submit button with loading indicator
 
-**Results Animation:**
-- Fade-in animation for results section
-- Staggered appearance of cards (delay-100, delay-200, etc.)
-- Score counter animation from 0 to final value
+**Animations:**
+- Framer Motion for results entrance (staggered fade-in)
+- Smooth transitions between form and results views
+- Scale animation on risk score appearance
 
-**Hover States:**
-- Cards: Subtle lift with shadow-lg transition
-- Buttons: Slight darkening and scale (transform: scale(1.02))
-- Links: Underline decoration
+**Hover/Active:**
+- Uses built-in shadcn/ui hover-elevate and active-elevate-2 utilities
+- No custom hover colors on Buttons or Badges
+- Cards use subtle elevation on hover where appropriate
+
+---
+
+## Icons
+
+**Library:** Lucide React
+**Key Icons:**
+- ShieldCheck: Logo/header, low risk
+- ShieldAlert: Medium risk indicator
+- ShieldX: High/critical risk indicator
+- AlertTriangle: Warning/red flag indicator
+- FileText: Content analysis category
+- Building2: Company verification category
+- Activity: Posting patterns category
+- MessageSquare: Communication category
+- TrendingUp: Confidence stat
+- Flag: Red flags count stat
+- Gauge: Risk level stat
 
 ---
 
 ## Accessibility
 
-- Form labels always visible (not placeholder-only)
-- Color-coding supplemented with text and icons
-- Focus indicators on all interactive elements (ring-2)
+- Form labels always visible (uppercase label pattern, not placeholder-only)
+- Color-coding supplemented with text labels and icons
+- Focus indicators on all interactive elements
 - Semantic HTML with proper heading hierarchy
-- ARIA labels for icon-only buttons
 - Keyboard navigation fully supported
-- High contrast ratio maintained throughout
+- Severity communicated through both color AND text badges
 
 ---
 
-## Content Strategy
+## API Response Structure
 
-**Messaging:**
-- Confident, authoritative tone
-- Clear explanations without jargon
-- Action-oriented recommendations
-- Transparency about detection methods
+```json
+{
+  "ghostScore": 90,
+  "confidence": 93,
+  "riskLevel": "high",
+  "recommendation": "Do not send money or personal documents; treat this listing as a likely scam.",
+  "redFlags": [
+    {
+      "severity": "critical",
+      "message": "Listing requires an upfront payment — legitimate employers do not ask candidates to pay.",
+      "category": "content"
+    }
+  ],
+  "detailedAnalysis": {
+    "contentAnalysis": { "score": 35, "flags": ["..."] },
+    "companyVerification": { "score": 20, "flags": ["..."] },
+    "postingPatterns": { "score": 15, "flags": ["..."] },
+    "communication": { "score": 10, "flags": ["..."] }
+  }
+}
+```
 
-**Empty States:**
-- Welcoming message before first analysis
-- Clear instructions on how to get started
-- Example job posting data for demo
+---
 
-**Error Handling:**
-- Friendly error messages
-- Suggestions for resolution
-- Fallback for failed analyses
+## Architecture Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| AI Provider | OpenAI via Replit AI Integrations | No API key management, billed to credits |
+| AI Model | gpt-5-mini | Cost-effective for structured analysis |
+| Fallback | Rule-based pattern matching | Ensures availability if AI is down |
+| Auth | Replit Auth | Native integration, no password management |
+| Database | PostgreSQL (Neon-backed) | Replit built-in, supports rollback |
+| Styling | Tailwind + shadcn/ui | Consistent component library with theming |
+| State | TanStack Query | Server state caching and mutation handling |
