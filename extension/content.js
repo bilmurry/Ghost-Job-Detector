@@ -164,7 +164,14 @@
     `;
     document.body.appendChild(btn);
 
-    btn.addEventListener("click", handleAnalyze);
+    btn.addEventListener("click", () => {
+      const panel = document.getElementById("ghost-panel");
+      if (panel && panel.classList.contains("ghost-panel-open")) {
+        hidePanel();
+      } else {
+        handleAnalyze();
+      }
+    });
     return btn;
   }
 
