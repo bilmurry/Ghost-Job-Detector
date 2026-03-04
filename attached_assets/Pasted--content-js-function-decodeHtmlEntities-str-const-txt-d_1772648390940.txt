@@ -1,3 +1,5 @@
+// content.js
+
 function decodeHtmlEntities(str = "") {
   const txt = document.createElement("textarea");
   txt.innerHTML = str;
@@ -38,6 +40,7 @@ function getJsonLdJobPosting() {
     const nodes = Array.isArray(data) ? data : [data];
 
     for (const node of nodes) {
+      // Some sites wrap JobPosting inside @graph
       const graph = node && node["@graph"] ? node["@graph"] : [node];
       for (const g of graph) {
         if (!g) continue;
@@ -60,6 +63,7 @@ function extractFromJsonLd() {
   const org = jp.hiringOrganization || jp.organization || {};
   const company = cleanText(org.name || "");
 
+  // Salary can be nested; keep it simple + safe
   let salary = "";
   const baseSalary = jp.baseSalary;
   if (baseSalary && typeof baseSalary === "object") {
@@ -74,6 +78,7 @@ function extractFromJsonLd() {
 function extractSiteSpecific() {
   const host = location.hostname;
 
+  // LinkedIn
   if (host.includes("linkedin.com")) {
     return {
       title: pickFirst(
@@ -93,6 +98,7 @@ function extractSiteSpecific() {
     };
   }
 
+  // Indeed
   if (host.includes("indeed.com")) {
     return {
       title: pickFirst(
@@ -110,6 +116,7 @@ function extractSiteSpecific() {
     };
   }
 
+  // Glassdoor
   if (host.includes("glassdoor.com")) {
     return {
       title: pickFirst(
@@ -127,6 +134,7 @@ function extractSiteSpecific() {
     };
   }
 
+  // ZipRecruiter
   if (host.includes("ziprecruiter.com")) {
     return {
       title: pickFirst(
@@ -149,9 +157,11 @@ function extractSiteSpecific() {
 }
 
 function extractGenericFallback() {
+  // Last resort: use OG + page title; description trimmed
   const title = pickFirst(getMeta("og:title"), document.title);
   const company = pickFirst(getMeta("og:site_name"), getMeta("author"));
 
+  // Try to avoid grabbing nav/footer junk:
   const main = document.querySelector("main") || document.body;
   const text = cleanText(main?.innerText || "");
   const description = text.slice(0, 2500);
@@ -160,9 +170,11 @@ function extractGenericFallback() {
 }
 
 function extractJobData() {
+  // 1) JSON-LD (best)
   const fromLd = extractFromJsonLd();
   if (fromLd && (fromLd.title || fromLd.company || fromLd.description)) return fromLd;
 
+  // 2) Site-specific
   const fromSite = extractSiteSpecific();
   if (fromSite && (fromSite.title || fromSite.company || fromSite.description)) {
     return {
@@ -173,6 +185,7 @@ function extractJobData() {
     };
   }
 
+  // 3) Generic fallback
   const fromGeneric = extractGenericFallback();
   return {
     title: cleanText(fromGeneric.title),
@@ -182,6 +195,7 @@ function extractJobData() {
   };
 }
 
+// Listen for a "SCAN_PAGE" request from popup/background
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === "SCAN_PAGE") {
     const data = extractJobData();
