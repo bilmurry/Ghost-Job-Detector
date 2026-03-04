@@ -157,9 +157,8 @@
     btn.id = "ghost-detector-btn";
     btn.title = "Analyze this job posting";
     btn.innerHTML = `
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="m9 12 2 2 4-4"/>
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C8.13 2 5 5.13 5 9v7.5c0 .28.22.5.5.5s.5-.22.5-.5V16c.55 0 1 .45 1 1v1.5c0 .28.22.5.5.5s.5-.22.5-.5V17c0-.55.45-1 1-1s1 .45 1 1v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55.45-1 1-1s1 .45 1 1v1.5c0 .28.22.5.5.5s.5-.22.5-.5V17c0-.55.45-1 1-1v.5c0 .28.22.5.5.5s.5-.22.5-.5V9c0-3.87-3.13-7-7-7zm-2.5 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm5 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
       </svg>
     `;
     document.body.appendChild(btn);

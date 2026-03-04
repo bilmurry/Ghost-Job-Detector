@@ -2,28 +2,43 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 48px;
-  height: 48px;
-  background: #111418;
-  color: #4A8CFF;
-  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(145deg, #1A1D24, #111418);
+  color: #A8B4FF;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 9997;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow:
+    0 4px 20px rgba(168, 180, 255, 0.15),
+    0 0 0 1px rgba(168, 180, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   user-select: none;
+  animation: ghost-float 3s ease-in-out infinite;
+}
+
+@keyframes ghost-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
 }
 
 #ghost-detector-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(74, 140, 255, 0.3);
+  transform: scale(1.1) translateY(-2px);
+  animation: none;
+  box-shadow:
+    0 8px 32px rgba(168, 180, 255, 0.25),
+    0 0 0 1px rgba(168, 180, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #C4CDFF;
 }
 
 #ghost-detector-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
+  animation: none;
 }
 
 #ghost-overlay {
