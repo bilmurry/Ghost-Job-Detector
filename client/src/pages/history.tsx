@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Shield,
+  Ghost,
   ArrowLeft,
   Trash2,
   Eye,
@@ -17,9 +17,6 @@ import {
   Info,
   Loader2,
   LogIn,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,22 +38,22 @@ const riskLevelConfig: Record<string, { color: string; bgColor: string; icon: ty
   high: {
     color: "text-red-500 dark:text-red-400",
     bgColor: "bg-red-500/10 dark:bg-red-500/15",
-    icon: ShieldX,
+    icon: Ghost,
   },
   medium: {
     color: "text-amber-500 dark:text-amber-400",
     bgColor: "bg-amber-500/10 dark:bg-amber-500/15",
-    icon: ShieldAlert,
+    icon: Ghost,
   },
   "low-medium": {
     color: "text-orange-500 dark:text-orange-400",
     bgColor: "bg-orange-500/10 dark:bg-orange-500/15",
-    icon: ShieldAlert,
+    icon: Ghost,
   },
   low: {
     color: "text-emerald-500 dark:text-emerald-400",
     bgColor: "bg-emerald-500/10 dark:bg-emerald-500/15",
-    icon: ShieldCheck,
+    icon: Ghost,
   },
 };
 
@@ -244,7 +241,7 @@ function PageHeader({ subtitle }: { subtitle: string }) {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 h-14">
           <div className="flex items-center gap-2.5">
-            <Shield className="w-5 h-5" />
+            <Ghost className="w-5 h-5" />
             <div>
               <span className="text-sm font-semibold tracking-tight">Ghost Job Detector</span>
               <span className="text-xs text-muted-foreground ml-2 hidden sm:inline">{subtitle}</span>

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  Shield,
+  Ghost,
   AlertTriangle,
   AlertCircle,
   CheckCircle,
@@ -24,9 +24,6 @@ import {
   LogOut,
   History,
   ScanLine,
-  ShieldCheck,
-  ShieldAlert,
-  ShieldX,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -94,31 +91,31 @@ const severityConfig: Record<
 
 const riskLevelConfig: Record<
   string,
-  { color: string; strokeColor: string; textColor: string; icon: typeof ShieldCheck }
+  { color: string; strokeColor: string; textColor: string; icon: typeof Ghost }
 > = {
   high: {
     color: "from-red-500 to-red-600",
     strokeColor: "stroke-red-500",
     textColor: "text-red-500 dark:text-red-400",
-    icon: ShieldX,
+    icon: Ghost,
   },
   medium: {
     color: "from-amber-500 to-amber-600",
     strokeColor: "stroke-amber-500",
     textColor: "text-amber-500 dark:text-amber-400",
-    icon: ShieldAlert,
+    icon: Ghost,
   },
   "low-medium": {
     color: "from-orange-500 to-orange-600",
     strokeColor: "stroke-orange-500",
     textColor: "text-orange-500 dark:text-orange-400",
-    icon: ShieldAlert,
+    icon: Ghost,
   },
   low: {
     color: "from-emerald-500 to-emerald-600",
     strokeColor: "stroke-emerald-500",
     textColor: "text-emerald-500 dark:text-emerald-400",
-    icon: ShieldCheck,
+    icon: Ghost,
   },
 };
 
@@ -255,7 +252,7 @@ function RedFlagsSection({ flags = [] }: { flags?: RedFlag[] }) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <ShieldCheck className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
+          <Ghost className="w-10 h-10 text-emerald-500 mx-auto mb-3" />
           <p className="text-sm text-muted-foreground">No red flags detected</p>
         </CardContent>
       </Card>
@@ -726,7 +723,7 @@ export default function Home() {
           <div className="flex items-center justify-between gap-4 h-14">
             <Link href="/">
               <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-home">
-                <Shield className="w-5 h-5" />
+                <Ghost className="w-5 h-5" />
                 <span className="text-sm font-semibold tracking-tight">Ghost Job Detector</span>
               </div>
             </Link>
@@ -865,7 +862,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <Shield className="w-3.5 h-3.5" />
+              <Ghost className="w-3.5 h-3.5" />
               <span>Ghost Job Detector</span>
             </div>
             <p>
