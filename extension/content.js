@@ -163,13 +163,17 @@
 
   function createButton() {
     const btn = document.createElement("div");
-    btn.id = "ghost-detector-btn";
+    btn.id = "gjdb-fab";
     btn.title = "Analyze this job posting";
-    btn.innerHTML = `
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C8.13 2 5 5.13 5 9v7.5c0 .28.22.5.5.5s.5-.22.5-.5V16c.55 0 1 .45 1 1v1.5c0 .28.22.5.5.5s.5-.22.5-.5V17c0-.55.45-1 1-1s1 .45 1 1v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55.45-1 1-1s1 .45 1 1v1.5c0 .28.22.5.5.5s.5-.22.5-.5V17c0-.55.45-1 1-1v.5c0 .28.22.5.5.5s.5-.22.5-.5V9c0-3.87-3.13-7-7-7zm-2.5 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm5 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-      </svg>
-    `;
+    btn.className = "gjdb-ring-neutral";
+
+    const ghost = document.createElement("div");
+    ghost.className = "ghost";
+    const mouth = document.createElement("div");
+    mouth.className = "mouth";
+    ghost.appendChild(mouth);
+    btn.appendChild(ghost);
+
     document.body.appendChild(btn);
 
     btn.addEventListener("click", () => {
@@ -181,6 +185,19 @@
       }
     });
     return btn;
+  }
+
+  function setFabRing(riskLevel) {
+    const fab = document.getElementById("gjdb-fab");
+    if (!fab) return;
+    fab.classList.remove("gjdb-ring-neutral", "gjdb-ring-green", "gjdb-ring-yellow", "gjdb-ring-red");
+    switch (riskLevel) {
+      case "low": fab.classList.add("gjdb-ring-green"); break;
+      case "medium":
+      case "low-medium": fab.classList.add("gjdb-ring-yellow"); break;
+      case "high": fab.classList.add("gjdb-ring-red"); break;
+      default: fab.classList.add("gjdb-ring-neutral"); break;
+    }
   }
 
   function showPanel(content) {
@@ -223,6 +240,7 @@
   }
 
   function showLoading(jobData) {
+    setFabRing(null);
     showPanel(`
       <div class="ghost-panel-header">
         <div class="ghost-panel-title">
@@ -271,6 +289,7 @@
   }
 
   function showResults(data) {
+    setFabRing(data.riskLevel);
     const riskColor = getRiskColor(data.riskLevel);
     const score = data.ghostScore;
     const circumference = 2 * Math.PI * 54;
@@ -374,7 +393,7 @@
   }
 
   function init() {
-    if (!document.getElementById("ghost-detector-btn")) {
+    if (!document.getElementById("gjdb-fab")) {
       createButton();
     }
   }
@@ -386,7 +405,7 @@
   }
 
   const observer = new MutationObserver(() => {
-    if (!document.getElementById("ghost-detector-btn")) {
+    if (!document.getElementById("gjdb-fab")) {
       createButton();
     }
   });
