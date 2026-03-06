@@ -5,7 +5,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      width: 340px;
+      width: 360px;
       padding: 20px;
       background: #111418;
       color: #E6E8EB;
@@ -25,6 +25,126 @@
       font-weight: 600;
       letter-spacing: -0.01em;
     }
+    .scan-btn {
+      width: 100%;
+      padding: 10px;
+      background: #2563EB;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .scan-btn:hover { background: #1D4FD7; }
+    .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .scan-result {
+      margin-top: 14px;
+      display: none;
+    }
+    .scan-result.visible { display: block; }
+    .result-card {
+      background: #1A1D24;
+      border: 1px solid #2A2D35;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .result-risk {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .result-score {
+      font-size: 28px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .result-rec {
+      font-size: 12px;
+      color: #B0B3BA;
+      line-height: 1.5;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #2A2D35;
+    }
+    .result-flags {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #2A2D35;
+    }
+    .result-flags-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6B6E76;
+      margin-bottom: 8px;
+    }
+    .flag-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      line-height: 1.4;
+      color: #B0B3BA;
+    }
+    .flag-badge {
+      flex-shrink: 0;
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .scan-error {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      color: #F87171;
+      font-size: 12px;
+      display: none;
+    }
+    .scan-error.visible { display: block; }
+    .divider {
+      height: 1px;
+      background: #2A2D35;
+      margin: 16px 0;
+    }
+    .settings-toggle {
+      font-size: 11px;
+      color: #6B6E76;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+    }
+    .settings-toggle:hover { color: #8B8D94; }
+    .settings-panel {
+      display: none;
+      margin-top: 12px;
+    }
+    .settings-panel.visible { display: block; }
     label {
       display: block;
       font-size: 10px;
@@ -48,46 +168,35 @@
     }
     input:focus { border-color: #4A8CFF; }
     input::placeholder { color: #555960; }
-    .hint {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #6B6E76;
-      line-height: 1.4;
-    }
-    button {
-      margin-top: 14px;
+    .save-btn {
+      margin-top: 10px;
       width: 100%;
-      padding: 8px;
-      background: #2563EB;
-      color: #fff;
-      border: none;
+      padding: 7px;
+      background: #2A2D35;
+      color: #E6E8EB;
+      border: 1px solid #3A3D45;
       border-radius: 6px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       font-family: inherit;
       cursor: pointer;
       transition: background 0.15s;
     }
-    button:hover { background: #1D4FD7; }
+    .save-btn:hover { background: #3A3D45; }
     .status {
-      margin-top: 10px;
+      margin-top: 8px;
       font-size: 11px;
       text-align: center;
       min-height: 16px;
     }
     .status.success { color: #34D399; }
     .status.error { color: #F87171; }
-    .divider {
-      height: 1px;
-      background: #2A2D35;
-      margin: 16px 0;
-    }
     .info {
-      font-size: 11px;
-      color: #6B6E76;
-      line-height: 1.5;
+      margin-top: 12px;
+      font-size: 10px;
+      color: #4A4D55;
+      text-align: center;
     }
-    .info strong { color: #8B8D94; }
   </style>
 </head>
 <body>
@@ -99,19 +208,46 @@
     <h1>Ghost Job Detector</h1>
   </div>
 
-  <label for="api-url">API Endpoint URL</label>
-  <input type="url" id="api-url" placeholder="https://ghost-job-detector.replit.app" />
-  <div class="hint">Enter the HTTPS URL where your Ghost Job Detector app is published.</div>
+  <button class="scan-btn" id="scan-btn" data-testid="button-scan">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    Analyze This Job Posting
+  </button>
 
-  <button id="save-btn">Save</button>
-  <div class="status" id="status"></div>
+  <div class="scan-error" id="scan-error" data-testid="text-scan-error"></div>
+
+  <div class="scan-result" id="scan-result" data-testid="scan-result">
+    <div class="result-card">
+      <div class="result-header">
+        <div class="result-score" id="result-score" data-testid="text-score"></div>
+        <div class="result-risk" id="result-risk" data-testid="text-risk"></div>
+      </div>
+      <div class="result-rec" id="result-rec" data-testid="text-recommendation"></div>
+      <div class="result-flags" id="result-flags" data-testid="result-flags"></div>
+    </div>
+  </div>
 
   <div class="divider"></div>
 
+  <div class="settings-toggle" id="settings-toggle" data-testid="button-settings">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06c.5.5 1.21.71 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    Settings
+  </div>
+
+  <div class="settings-panel" id="settings-panel">
+    <label for="api-url">API Endpoint URL</label>
+    <input type="url" id="api-url" placeholder="https://ghost-job-detector.replit.app" data-testid="input-api-url" />
+    <button class="save-btn" id="save-btn" data-testid="button-save">Save</button>
+    <div class="status" id="status" data-testid="text-status"></div>
+  </div>
+
   <div class="info">
-    <strong>Supported sites:</strong><br>
-    LinkedIn, Indeed, Glassdoor, ZipRecruiter<br><br>
-    Navigate to any job posting on these sites and click the shield button to analyze.
+    Supports LinkedIn, Indeed, Glassdoor, ZipRecruiter
   </div>
 
   <script src="popup.js"></script>

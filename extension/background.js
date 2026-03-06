@@ -8,38 +8,55 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "ANALYZE_JOB") {
-    chrome.storage.sync.get(["apiBaseUrl"], async (result) => {
-      const baseUrl = result.apiBaseUrl || DEFAULT_API_URL;
+function getApiBase() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get(["apiBaseUrl"], (result) => {
+      resolve(result.apiBaseUrl || DEFAULT_API_URL);
+    });
+  });
+}
 
-      if (!baseUrl) {
-        sendResponse({
-          error: "No API URL configured. Click the extension icon to set your Ghost Job Detector URL.",
-        });
-        return;
-      }
+async function scanTab(tabId) {
+  try {
+    const [response] = await chrome.tabs.sendMessage(tabId, { type: "SCAN_PAGE" }).then(r => [r]).catch(() => [null]);
 
-      try {
-        const response = await fetch(`${baseUrl}/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(message.data),
-        });
+    if (!response || !response.ok) {
+      return { error: "Could not extract job data from this page." };
+    }
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          sendResponse({ error: `Server error (${response.status}): ${errorText}` });
-          return;
-        }
+    const jobData = response.data;
 
-        const data = await response.json();
-        sendResponse({ data });
-      } catch (err) {
-        sendResponse({ error: `Connection failed: ${err.message}` });
-      }
+    if (!jobData.title && !jobData.company && !jobData.description) {
+      return { error: "No job posting data found on this page." };
+    }
+
+    const baseUrl = await getApiBase();
+    if (!baseUrl) {
+      return { error: "No API URL configured. Click the extension icon to set your Ghost Job Detector URL." };
+    }
+
+    const apiResponse = await fetch(`${baseUrl}/api/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(jobData),
     });
 
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      return { error: `Server error (${apiResponse.status}): ${errorText}` };
+    }
+
+    const data = await apiResponse.json();
+    return { data };
+  } catch (err) {
+    return { error: `Analysis failed: ${err.message}` };
+  }
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "ANALYZE_TAB") {
+    const tabId = message.tabId;
+    scanTab(tabId).then(sendResponse);
     return true;
   }
 });
