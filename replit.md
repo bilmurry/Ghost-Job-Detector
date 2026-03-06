@@ -100,18 +100,25 @@ The fallback analysis logic lives in `server/routes.ts` and uses pattern matchin
 ### Chrome Extension (Browser Extension)
 - **Directory**: `/extension/` - self-contained Chrome MV3 extension
 - **Purpose**: Analyze job postings directly on LinkedIn, Indeed, Glassdoor, ZipRecruiter
-- **Architecture**: Content script + background service worker + settings popup
+- **Architecture**: Content script (data extractor) + background service worker (orchestrator) + popup (UI + settings)
 - **Files**:
-  - `manifest.json` - MV3 manifest with host permissions for job sites
-  - `content.js` - Floating button injection, DOM scraping, results panel
-  - `background.js` - Message relay for API calls (avoids CORS in content script)
-  - `popup.html/popup.js` - Settings UI for configuring API endpoint URL
-  - `styles.css` - Dark-themed panel and button styles
-  - `icons/` - Extension icons (16/48/128px)
-- **Scraping**: Site-specific selectors for LinkedIn, Indeed, Glassdoor, ZipRecruiter + generic fallback
-- **API**: Sends scraped data to configured Ghost Job Detector `/api/analyze` endpoint
+  - `manifest.json` - MV3 manifest with host permissions for job sites + API backend
+  - `content.js` - Data extraction via JSON-LD, site-specific selectors, and generic fallback. Listens for SCAN_PAGE messages.
+  - `background.js` - Orchestrates scan flow: sends SCAN_PAGE to content script → receives job data → calls /api/analyze → returns results
+  - `popup.html/popup.js` - Scan button UI with results display (score, risk, flags) + collapsible settings panel
+  - `icons/` - Properly sized extension icons (16/48/128px)
+- **Data Extraction**: JSON-LD JobPosting schema (primary), site-specific DOM selectors (fallback), OG meta tags (generic fallback)
+- **API**: Sends extracted job data to configured Ghost Job Detector `/api/analyze` endpoint (HTTPS enforced)
 - **CORS**: Backend has CORS headers on `/api/analyze` to allow extension requests
+- **Security**: All dynamic content in popup uses escapeHtml() to prevent XSS
 - **Installation**: Load unpacked in Chrome (chrome://extensions > Developer mode > Load unpacked > select /extension folder)
+
+### Security Middleware
+- **File**: `server/middleware.ts` - Custom security middleware (no external dependencies)
+- **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, Strict-Transport-Security
+- **Rate Limiting**: In-memory rate limiter with configurable windows. General API: 30 req/min, Analyze/Scrape: 10 req/min
+- **Request Size Limiting**: 100KB max request body
+- **Error Boundary**: React ErrorBoundary component wraps the entire app (client/src/components/error-boundary.tsx)
 
 ### Development Tools
 - Replit-specific Vite plugins (error overlay, cartographer, dev banner)

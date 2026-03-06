@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { securityHeaders, rateLimit, requestSizeLimiter } from "./middleware";
 
 const app = express();
 const httpServer = createServer(app);
@@ -12,6 +13,10 @@ declare module "http" {
   }
 }
 
+app.use(securityHeaders);
+
+app.use(requestSizeLimiter(100 * 1024));
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {
@@ -21,6 +26,22 @@ app.use(
 );
 
 app.use(express.urlencoded({ extended: false }));
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Too many requests. Please wait a moment before trying again.",
+});
+
+const analyzeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: "Too many analysis requests. Please wait before scanning another job.",
+});
+
+app.use("/api/analyze", analyzeLimiter);
+app.use("/api/scrape-url", analyzeLimiter);
+app.use("/api/", apiLimiter);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
