@@ -45,8 +45,20 @@ export const analyses = pgTable(
   (table) => [index("IDX_analyses_user_id").on(table.userId)]
 );
 
+export const pageViews = pgTable("page_views", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  path: varchar("path").notNull(),
+  userAgent: varchar("user_agent"),
+  referrer: varchar("referrer"),
+  ip: varchar("ip"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
 export type InsertAnalysis = typeof analyses.$inferInsert;
 export type Analysis = typeof analyses.$inferSelect;
+
+export type InsertPageView = typeof pageViews.$inferInsert;
+export type PageView = typeof pageViews.$inferSelect;

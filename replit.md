@@ -131,6 +131,13 @@ The fallback analysis logic lives in `server/routes.ts` and uses pattern matchin
   3. Build and run from Xcode, or archive for App Store submission
 - **Requirements**: Apple Developer account ($99/year), Mac with Xcode, CocoaPods installed
 
+### Admin Dashboard
+- **Route**: `/admin` — only accessible to admin user (ID: 50135034)
+- **Backend**: `GET /api/admin/stats` protected by `isAdmin` middleware (checks auth + user ID)
+- **Tracks**: Total users, total analyses, page views (today/week/total), daily view chart, top pages, recent users, recent analyses
+- **Page View Tracking**: `POST /api/track` records every page visit (path, user agent, referrer, IP) to `page_views` table
+- **Frontend hook**: `usePageTracker()` in `client/src/hooks/use-page-tracker.ts` fires on page load
+
 ### Development Tools
 - Replit-specific Vite plugins (error overlay, cartographer, dev banner)
 - esbuild for production server bundling with dependency allowlist

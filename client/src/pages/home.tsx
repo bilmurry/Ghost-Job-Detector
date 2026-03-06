@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { usePageTracker } from "@/hooks/use-page-tracker";
 import { apiRequest } from "@/lib/queryClient";
 import {
   jobPostingSchema,
@@ -771,6 +772,7 @@ function JobInputForm({
 export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  usePageTracker();
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: JobPosting) => {

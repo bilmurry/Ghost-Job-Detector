@@ -10,6 +10,11 @@ import {
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { analysisStorage } from "./storage";
 import { analyzeJobWithAI } from "./ghostAI";
+import { db } from "./db";
+import { users, analyses, pageViews } from "@shared/models/auth";
+import { sql, desc, count } from "drizzle-orm";
+
+const ADMIN_USER_ID = "50135034";
 
 const SUSPICIOUS_PATTERNS = {
   paymentKeywords: [
@@ -1054,6 +1059,115 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error deleting analysis:", error);
       return res.status(500).json({ error: "Failed to delete analysis" });
+    }
+  });
+
+  app.post("/api/track", async (req, res) => {
+    try {
+      const { path, referrer } = req.body;
+      if (!path || typeof path !== "string") {
+        return res.status(400).json({ error: "Missing path" });
+      }
+      await db.insert(pageViews).values({
+        path: path.slice(0, 500),
+        userAgent: (req.headers["user-agent"] || "").slice(0, 500),
+        referrer: (referrer || req.headers["referer"] || "").slice(0, 500),
+        ip: req.ip || req.socket.remoteAddress || "",
+      });
+      return res.json({ ok: true });
+    } catch (error) {
+      console.error("Track error:", error);
+      return res.json({ ok: true });
+    }
+  });
+
+  const isAdmin = (req: any, res: any, next: any) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (req.user?.claims?.sub !== ADMIN_USER_ID) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    next();
+  };
+
+  app.get("/api/admin/stats", isAdmin, async (_req, res) => {
+    try {
+      const [userCount] = await db.select({ value: count() }).from(users);
+      const [analysisCount] = await db.select({ value: count() }).from(analyses);
+      const [viewsToday] = await db
+        .select({ value: count() })
+        .from(pageViews)
+        .where(sql`created_at >= CURRENT_DATE`);
+      const [viewsWeek] = await db
+        .select({ value: count() })
+        .from(pageViews)
+        .where(sql`created_at >= CURRENT_DATE - INTERVAL '7 days'`);
+      const [viewsTotal] = await db.select({ value: count() }).from(pageViews);
+
+      const recentUsers = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          createdAt: users.createdAt,
+        })
+        .from(users)
+        .orderBy(desc(users.createdAt))
+        .limit(20);
+
+      const recentAnalyses = await db
+        .select({
+          id: analyses.id,
+          userId: analyses.userId,
+          jobTitle: analyses.jobTitle,
+          company: analyses.company,
+          ghostScore: analyses.ghostScore,
+          riskLevel: analyses.riskLevel,
+          createdAt: analyses.createdAt,
+        })
+        .from(analyses)
+        .orderBy(desc(analyses.createdAt))
+        .limit(20);
+
+      const dailyViews = await db
+        .select({
+          date: sql<string>`DATE(created_at)`.as("date"),
+          views: count(),
+        })
+        .from(pageViews)
+        .where(sql`created_at >= CURRENT_DATE - INTERVAL '30 days'`)
+        .groupBy(sql`DATE(created_at)`)
+        .orderBy(sql`DATE(created_at)`);
+
+      const topPaths = await db
+        .select({
+          path: pageViews.path,
+          views: count(),
+        })
+        .from(pageViews)
+        .where(sql`created_at >= CURRENT_DATE - INTERVAL '7 days'`)
+        .groupBy(pageViews.path)
+        .orderBy(desc(count()))
+        .limit(10);
+
+      return res.json({
+        users: { total: userCount.value },
+        analyses: { total: analysisCount.value },
+        pageViews: {
+          today: viewsToday.value,
+          week: viewsWeek.value,
+          total: viewsTotal.value,
+        },
+        recentUsers,
+        recentAnalyses,
+        dailyViews,
+        topPaths,
+      });
+    } catch (error) {
+      console.error("Admin stats error:", error);
+      return res.status(500).json({ error: "Failed to fetch admin stats" });
     }
   });
 
