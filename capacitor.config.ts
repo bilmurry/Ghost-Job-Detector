@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: "Ghost Job Detector",
   webDir: "dist/public",
   server: {
-    url: "https://ghost-job-detector.replit.app",
+    url: "https://ghostjobdetector.org",
     cleartext: false,
   },
   ios: {
