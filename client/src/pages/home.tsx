@@ -26,6 +26,7 @@ import {
   ScanLine,
   ArrowRight,
   Link2,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -928,7 +929,14 @@ export default function Home() {
       </main>
 
       <footer className="border-t mt-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+          <div className="flex items-center justify-center gap-2" data-testid="link-mobile-app">
+            <Smartphone className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Mobile App —{" "}
+              <span className="font-medium text-foreground">Coming Soon</span>
+            </span>
+          </div>
           <p className="text-xs text-muted-foreground text-center" data-testid="text-footer-disclaimer">
             Insights are generated from publicly available job listings using automated analysis.
           </p>
