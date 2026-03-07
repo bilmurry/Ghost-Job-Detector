@@ -1,7 +1,6 @@
 function decodeHtmlEntities(str = "") {
-  const txt = document.createElement("textarea");
-  txt.innerHTML = str;
-  return (txt.value || str);
+  const doc = new DOMParser().parseFromString(str, "text/html");
+  return doc.body?.textContent || str;
 }
 
 function cleanText(str = "") {
