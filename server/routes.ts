@@ -1176,9 +1176,9 @@ export async function registerRoutes(
   app.get("/api/download-extension", (_req, res) => {
     try {
       const extensionDir = path.resolve(process.cwd(), "extension");
-      const tarPath = "/tmp/ghost-hunter-extension.tar.gz";
-      execSync(`tar -czf "${tarPath}" -C "${extensionDir}" .`, { stdio: "pipe" });
-      res.download(tarPath, "ghost-hunter-extension.tar.gz");
+      const zipPath = "/tmp/ghost-hunter-extension.zip";
+      execSync(`cd "${extensionDir}" && zip -r "${zipPath}" .`, { stdio: "pipe" });
+      res.download(zipPath, "ghost-hunter-extension.zip");
     } catch (error) {
       console.error("Extension archive error:", error);
       res.status(500).json({ error: "Failed to create extension archive" });
