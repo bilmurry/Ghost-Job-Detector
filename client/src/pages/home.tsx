@@ -166,7 +166,7 @@ function RiskScoreCircle({ score, riskLevel }: { score: number; riskLevel: strin
         >
           {score}
         </motion.span>
-        <span className="text-xs text-muted-foreground font-medium tracking-wide uppercase">Risk Score</span>
+        <span className="text-xs text-muted-foreground font-medium tracking-wide uppercase">Ghost Score</span>
       </div>
     </div>
   );
