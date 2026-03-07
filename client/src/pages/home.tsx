@@ -882,7 +882,7 @@ export default function Home() {
                     Scan job postings and uncover ghost listings, hiring red flags, and scams before you apply.
                   </p>
                   <p className="mt-3 text-sm text-muted-foreground/80 italic leading-relaxed" data-testid="text-hero-brand">
-                    The job market shouldn't feel like chasing ghosts. GhostJobDetector helps you see which opportunities are real.
+                    Data-driven. Investigative. Built to empower applicants — so you apply with confidence, not hope.
                   </p>
                 </motion.div>
               </div>
