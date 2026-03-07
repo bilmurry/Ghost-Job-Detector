@@ -795,7 +795,7 @@ export default function Home() {
           <div className="flex items-center justify-between gap-4 h-14">
             <Link href="/">
               <div className="flex items-center gap-2.5 cursor-pointer" data-testid="link-home">
-                <Ghost className="w-5 h-5" />
+                <img src="/ghost-logo.png" alt="Ghost Job Detector" className="w-6 h-6 rounded" />
                 <span className="text-sm font-semibold tracking-tight text-teal-600 dark:text-teal-400">Ghost Job Detector</span>
               </div>
             </Link>
