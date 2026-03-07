@@ -36,9 +36,17 @@ async function ensureContentScript(tabId) {
 
 async function scanTab(tabId) {
   try {
+    const tab = await chrome.tabs.get(tabId);
+    const url = tab.url || "";
+    if (url.startsWith("chrome://") || url.startsWith("chrome-extension://") ||
+        url.startsWith("about:") || url.startsWith("edge://") ||
+        url.startsWith("brave://") || url === "" || url.startsWith("chrome-search://")) {
+      return { error: "This is a browser internal page. Navigate to a job posting on LinkedIn, Indeed, Glassdoor, or ZipRecruiter and try again." };
+    }
+
     const injected = await ensureContentScript(tabId);
     if (!injected) {
-      return { error: "Cannot access this page. Make sure you're on a job posting page (not a browser internal page)." };
+      return { error: "Cannot access this page. Make sure you're on a job posting page." };
     }
 
     let response = null;
