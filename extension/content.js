@@ -77,8 +77,19 @@ function extractFromJsonLd() {
   const baseSalary = jp.baseSalary;
   if (baseSalary && typeof baseSalary === "object") {
     const val = baseSalary.value;
-    if (val && typeof val === "object") salary = cleanText(val.value || "");
+    if (val && typeof val === "object") {
+      const parts = [];
+      if (baseSalary.currency) parts.push(baseSalary.currency);
+      if (val.minValue && val.maxValue) {
+        parts.push(`${val.minValue}-${val.maxValue}`);
+      } else if (val.value) {
+        parts.push(val.value);
+      }
+      if (baseSalary.unitText) parts.push(`per ${baseSalary.unitText}`);
+      salary = parts.join(" ");
+    }
     if (typeof val === "string") salary = cleanText(val);
+    if (typeof val === "number") salary = String(val);
   }
   if (!salary && jp.estimatedSalary) {
     const est = Array.isArray(jp.estimatedSalary) ? jp.estimatedSalary[0] : jp.estimatedSalary;
@@ -93,21 +104,21 @@ function extractFromJsonLd() {
     }
   }
 
-  let location = "";
+  let loc = "";
   if (jp.jobLocation) {
-    const loc = Array.isArray(jp.jobLocation) ? jp.jobLocation[0] : jp.jobLocation;
-    if (loc && loc.address) {
-      const addr = loc.address;
+    const jl = Array.isArray(jp.jobLocation) ? jp.jobLocation[0] : jp.jobLocation;
+    if (jl && jl.address) {
+      const addr = jl.address;
       const locParts = [addr.addressLocality, addr.addressRegion, addr.addressCountry].filter(Boolean);
-      location = locParts.join(", ");
+      loc = locParts.join(", ");
     }
   }
 
-  return { title, company, description: desc, salary, location };
+  return { title, company, description: desc, salary, location: loc };
 }
 
 function extractSiteSpecific() {
-  const host = location.hostname;
+  const host = window.location.hostname;
 
   if (host.includes("linkedin.com")) {
     return {
@@ -118,6 +129,10 @@ function extractSiteSpecific() {
           'h1.job-details-jobs-unified-top-card__job-title',
           'h1[class*="job-title"]',
           '.jobs-unified-top-card__job-title',
+          'h3.base-search-card__title',
+          '.job-details-jobs-unified-top-card__job-title a',
+          '.top-card-layout__title',
+          'h2.top-card-layout__title',
           'h1',
         ]),
         getMeta("og:title"),
@@ -127,21 +142,44 @@ function extractSiteSpecific() {
         queryText([
           '.jobs-unified-top-card__company-name a',
           '.jobs-unified-top-card__company-name',
+          '.job-details-jobs-unified-top-card__company-name a',
+          '.job-details-jobs-unified-top-card__company-name',
           'a[data-tracking-control-name="public_jobs_topcard-org-name"]',
           '.topcard__org-name-link',
           'a.topcard__org-name-link',
-          '.job-details-jobs-unified-top-card__company-name a',
-          '[data-tracking-control-name="public_jobs_topcard-org-name"]',
+          '.top-card-layout__card .topcard__org-name-link',
+          'a[data-tracking-control-name="public_jobs_topcard_org_name"]',
+          'span.topcard__flavor a',
+          '.topcard__flavor--black-link',
         ])
       ),
       description: pickFirst(
         queryText([
           '.jobs-description__content',
           '.jobs-description-content__text',
+          '.jobs-box__html-content',
           '.description__text',
           '.show-more-less-html__markup',
           '#job-details',
+          '.jobs-description',
           '[data-automation-id="jobPostingDescription"]',
+          'section.description',
+        ])
+      ),
+      salary: pickFirst(
+        queryText([
+          '.salary.compensation__salary',
+          '.compensation__salary',
+          '.jobs-unified-top-card__job-insight--highlight span',
+          '.job-details-jobs-unified-top-card__job-insight span',
+        ])
+      ),
+      location: pickFirst(
+        queryText([
+          '.jobs-unified-top-card__bullet',
+          '.topcard__flavor--bullet',
+          '.job-details-jobs-unified-top-card__bullet',
+          '.top-card-layout__card .topcard__flavor:not(.topcard__flavor--bullet)',
         ])
       )
     };
@@ -153,6 +191,9 @@ function extractSiteSpecific() {
         queryText([
           'h1[data-testid="jobsearch-JobInfoHeader-title"]',
           '.jobsearch-JobInfoHeader-title',
+          'h2.jobTitle span',
+          'h2.jobTitle',
+          'h1.icl-u-xs-mb--xs',
           'h1',
         ]),
         getMeta("og:title")
@@ -164,6 +205,9 @@ function extractSiteSpecific() {
           '[data-testid="company-name"]',
           '[data-company-name="true"]',
           '.jobsearch-CompanyInfoWithoutHeaderImage a',
+          '.icl-u-lg-mr--sm a',
+          'div[data-company-name] a',
+          '.companyName',
         ])
       ),
       description: pickFirst(
@@ -171,6 +215,25 @@ function extractSiteSpecific() {
           '#jobDescriptionText',
           '.jobsearch-JobComponent-description',
           '#jobDescriptionSection',
+          '#jobsearch-ViewjobPaneWrapper .jobsearch-jobDescriptionText',
+          'div.jobsearch-jobDescriptionText',
+        ])
+      ),
+      salary: pickFirst(
+        queryText([
+          '#salaryInfoAndJobType span',
+          '[data-testid="attribute_snippet_testid"]',
+          '.jobsearch-JobMetadataHeader-item',
+          '.salary-snippet-container',
+          '.attribute_snippet',
+        ])
+      ),
+      location: pickFirst(
+        queryText([
+          '[data-testid="inlineHeader-companyLocation"]',
+          '[data-testid="job-location"]',
+          '.jobsearch-JobInfoHeader-subtitle div:last-child',
+          '.companyLocation',
         ])
       )
     };
@@ -181,7 +244,9 @@ function extractSiteSpecific() {
       title: pickFirst(
         queryText([
           '[data-test="job-title"]',
-          '.css-1vg6q84',
+          '.JobDetails_jobTitle__Rbnx1',
+          '.jobLink',
+          '.e1tk4kwz5',
           'h1',
         ]),
         getMeta("og:title")
@@ -190,7 +255,10 @@ function extractSiteSpecific() {
         queryText([
           '[data-test="employer-name"]',
           '[data-test="employerName"]',
+          '.EmployerProfile_compactEmployerName__9MGoc',
+          '.e1tk4kwz4',
           '.css-87ung5',
+          '.JobDetails_companyName__24Yrq a',
         ])
       ),
       description: pickFirst(
@@ -198,6 +266,24 @@ function extractSiteSpecific() {
           '[data-test="jobDescriptionContent"]',
           '.jobDescriptionContent',
           '#JobDescriptionContainer',
+          '.JobDetails_jobDescription__uW_fK',
+          '.desc',
+          '.JobDesc_jobDescription__SWgLR',
+        ])
+      ),
+      salary: pickFirst(
+        queryText([
+          '[data-test="detailSalary"]',
+          '.SalaryEstimate_salaryRange__brHFy',
+          '.css-1bluz6i',
+        ])
+      ),
+      location: pickFirst(
+        queryText([
+          '[data-test="location"]',
+          '[data-test="emp-location"]',
+          '.JobDetails_location__MbnkR',
+          '.e1tk4kwz1',
         ])
       )
     };
@@ -207,8 +293,10 @@ function extractSiteSpecific() {
     return {
       title: pickFirst(
         queryText([
+          'h1.job_title',
           'h1',
           '.job_title',
+          '[data-testid="job-title"]',
         ]),
         getMeta("og:title"),
         document.title
@@ -216,9 +304,12 @@ function extractSiteSpecific() {
       company: pickFirst(
         queryText([
           '[data-testid="company_name"]',
+          'a[data-testid="job-detail-company-name"]',
           '.hiring_company_text',
           '.jobList-introMeta',
-          'a[data-testid="job-detail-company-name"]',
+          '.hiring_company a',
+          '.t-company_name',
+          'a.company_name',
         ])
       ),
       description: pickFirst(
@@ -227,6 +318,22 @@ function extractSiteSpecific() {
           '.jobDescriptionSection',
           '#job_description',
           '.job_description',
+          '.job_description_text',
+          '.responsibilities_section',
+        ])
+      ),
+      salary: pickFirst(
+        queryText([
+          '.job_salary',
+          '[data-testid="salary"]',
+          '.salary_estimate',
+        ])
+      ),
+      location: pickFirst(
+        queryText([
+          '.job_location',
+          '[data-testid="location"]',
+          '.location_text',
         ])
       )
     };
@@ -255,26 +362,38 @@ function extractGenericFallback() {
 
 function extractJobData() {
   const fromLd = extractFromJsonLd();
-  if (fromLd && (fromLd.title || fromLd.company || fromLd.description)) return fromLd;
+  if (fromLd && (fromLd.title || fromLd.company || fromLd.description)) {
+    const fromSite = extractSiteSpecific();
+    if (fromSite) {
+      return {
+        title: fromLd.title || cleanText(fromSite.title || ""),
+        company: fromLd.company || cleanText(fromSite.company || ""),
+        description: fromLd.description || cleanText(fromSite.description || ""),
+        salary: fromLd.salary || cleanText(fromSite.salary || ""),
+        location: fromLd.location || cleanText(fromSite.location || ""),
+      };
+    }
+    return fromLd;
+  }
 
   const fromSite = extractSiteSpecific();
   if (fromSite && (fromSite.title || fromSite.company || fromSite.description)) {
     return {
-      title: cleanText(fromSite.title),
-      company: cleanText(fromSite.company),
-      description: cleanText(fromSite.description),
+      title: cleanText(fromSite.title || ""),
+      company: cleanText(fromSite.company || ""),
+      description: cleanText(fromSite.description || ""),
       salary: cleanText(fromSite.salary || ""),
-      location: cleanText(fromSite.location || "")
+      location: cleanText(fromSite.location || ""),
     };
   }
 
   const fromGeneric = extractGenericFallback();
   return {
-    title: cleanText(fromGeneric.title),
-    company: cleanText(fromGeneric.company),
-    description: cleanText(fromGeneric.description),
-    salary: cleanText(fromGeneric.salary || ""),
-    location: cleanText(fromGeneric.location || "")
+    title: cleanText(fromGeneric.title || ""),
+    company: cleanText(fromGeneric.company || ""),
+    description: cleanText(fromGeneric.description || ""),
+    salary: "",
+    location: "",
   };
 }
 
