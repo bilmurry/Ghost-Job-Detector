@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { execSync } from "child_process";
+import path from "path";
 import {
   jobPostingSchema,
   type JobPosting,
@@ -1168,6 +1170,18 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Admin stats error:", error);
       return res.status(500).json({ error: "Failed to fetch admin stats" });
+    }
+  });
+
+  app.get("/api/download-extension", (_req, res) => {
+    try {
+      const extensionDir = path.resolve(process.cwd(), "extension");
+      const tarPath = "/tmp/ghost-hunter-extension.tar.gz";
+      execSync(`tar -czf "${tarPath}" -C "${extensionDir}" .`, { stdio: "pipe" });
+      res.download(tarPath, "ghost-hunter-extension.tar.gz");
+    } catch (error) {
+      console.error("Extension archive error:", error);
+      res.status(500).json({ error: "Failed to create extension archive" });
     }
   });
 
