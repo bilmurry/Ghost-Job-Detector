@@ -141,11 +141,14 @@ scanBtn.addEventListener("click", async () => {
     scanError.classList.add("visible");
   } finally {
     scanBtn.disabled = false;
-    scanBtn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      Analyze This Job Posting`;
+    scanBtn.textContent = "";
+    const btnIcon = document.createElement("img");
+    btnIcon.src = "icons/icon16.png";
+    btnIcon.width = 16;
+    btnIcon.height = 16;
+    btnIcon.alt = "";
+    btnIcon.style.borderRadius = "2px";
+    scanBtn.appendChild(btnIcon);
+    scanBtn.appendChild(document.createTextNode(" Analyze This Job Posting"));
   }
 });
