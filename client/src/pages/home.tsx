@@ -868,18 +868,18 @@ export default function Home() {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              <div className="text-center max-w-xl mx-auto pt-8 pb-4">
+              <div className="text-center max-w-2xl mx-auto pt-8 pb-4">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                    Is that job real?
+                  <h2 className="text-4xl font-bold tracking-tight sm:text-5xl" data-testid="text-hero-title">
+                    The Original{" "}
+                    <span className="text-teal-600 dark:text-teal-400">Ghost Job Hunter</span>
                   </h2>
-                  <p className="mt-3 text-base text-muted-foreground leading-relaxed">
-                    Detect red flags, scam indicators, and ghost jobs that companies
-                    post with no intention of hiring.
+                  <p className="mt-4 text-lg text-muted-foreground leading-relaxed" data-testid="text-hero-subtitle">
+                    Scan job postings and uncover ghost listings, hiring red flags, and scams before you apply.
                   </p>
                 </motion.div>
               </div>
