@@ -1,11 +1,3 @@
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 function getRiskColor(level) {
   switch (level) {
@@ -114,21 +106,34 @@ scanBtn.addEventListener("click", async () => {
 
     resultRec.textContent = data.recommendation || "";
 
-    let flagsHtml = "";
+    resultFlags.textContent = "";
     if (data.redFlags && data.redFlags.length > 0) {
-      flagsHtml += '<div class="result-flags-title">Detected Issues</div>';
+      const title = document.createElement("div");
+      title.className = "result-flags-title";
+      title.textContent = "Detected Issues";
+      resultFlags.appendChild(title);
+
       for (const flag of data.redFlags.slice(0, 8)) {
         const color = getSeverityColor(flag.severity);
-        flagsHtml += `
-          <div class="flag-item">
-            <span class="flag-badge" style="background:${color}20; color:${color}; border:1px solid ${color}40;">
-              ${escapeHtml(flag.severity)}
-            </span>
-            <span>${escapeHtml(flag.message)}</span>
-          </div>`;
+
+        const item = document.createElement("div");
+        item.className = "flag-item";
+
+        const badge = document.createElement("span");
+        badge.className = "flag-badge";
+        badge.style.background = color + "20";
+        badge.style.color = color;
+        badge.style.border = "1px solid " + color + "40";
+        badge.textContent = flag.severity;
+
+        const message = document.createElement("span");
+        message.textContent = flag.message;
+
+        item.appendChild(badge);
+        item.appendChild(message);
+        resultFlags.appendChild(item);
       }
     }
-    resultFlags.innerHTML = flagsHtml;
 
     scanResult.classList.add("visible");
   } catch (err) {
