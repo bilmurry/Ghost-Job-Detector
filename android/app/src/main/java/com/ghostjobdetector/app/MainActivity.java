@@ -1,0 +1,5 @@
+package com.ghostjobdetector.app;
+
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {}
