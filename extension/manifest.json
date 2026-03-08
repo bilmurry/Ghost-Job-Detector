@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ghost Hunter Mode",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Activate Ghost Hunter Mode — scan job postings for red flags, scam indicators, and ghost jobs.",
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [
@@ -14,6 +14,7 @@
     "https://www.ziprecruiter.com/*",
     "https://ziprecruiter.com/*",
     "https://ghostjobdetector.org/*",
+    "https://workspace-jacobspindle1.replit.app/*",
     "https://*.replit.app/*",
     "https://*.replit.dev/*"
   ],

@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = "https://ghostjobdetector.org";
+const DEFAULT_API_URL = "https://workspace-jacobspindle1.replit.app";
 
 const JOB_SITE_PATTERNS = [
   { host: "linkedin.com", pathIncludes: "/jobs/" },
