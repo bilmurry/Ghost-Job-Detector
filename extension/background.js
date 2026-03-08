@@ -168,6 +168,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message.type === "SCAN_FROM_FAB") {
+    (async () => {
+      try {
+        const baseUrl = await getApiBase();
+        if (!baseUrl) {
+          sendResponse({ error: "No API URL configured. Open the extension popup to set your Ghost Job Detector URL." });
+          return;
+        }
+
+        const jobData = message.jobData;
+        if (!jobData || (!jobData.title && !jobData.company && !jobData.description)) {
+          sendResponse({ error: "No job data found on this page." });
+          return;
+        }
+
+        const apiResponse = await fetch(`${baseUrl}/api/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(jobData),
+        });
+
+        if (!apiResponse.ok) {
+          const errorText = await apiResponse.text();
+          sendResponse({ error: `Server error (${apiResponse.status}): ${errorText}` });
+          return;
+        }
+
+        const data = await apiResponse.json();
+        sendResponse({ data });
+      } catch (err) {
+        sendResponse({ error: `Analysis failed: ${err.message}` });
+      }
+    })();
+    return true;
+  }
+
   if (message.type === "JOB_PAGE_DETECTED") {
     if (sender.tab && sender.tab.id) {
       updateBadge(sender.tab.id, sender.tab.url);

@@ -411,67 +411,458 @@ function isJobPostingPage() {
   return false;
 }
 
-function createFloatingIndicator() {
-  if (document.getElementById("ghost-hunter-indicator")) return;
+let ghostButtonState = "idle";
 
-  const indicator = document.createElement("div");
-  indicator.id = "ghost-hunter-indicator";
-  indicator.setAttribute("data-testid", "ghost-hunter-floating-indicator");
-  indicator.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
-      <path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2 2 3-3 3 3 2-2 3 3V10a8 8 0 0 0-8-8z"/>
-    </svg>
-    <span>Job posting detected</span>
-  `;
+function getScoreColor(score) {
+  if (score >= 70) return { bg: "#EF4444", text: "#FFFFFF", label: "High Risk" };
+  if (score >= 50) return { bg: "#F59E0B", text: "#FFFFFF", label: "Medium Risk" };
+  if (score >= 30) return { bg: "#F97316", text: "#FFFFFF", label: "Some Risk" };
+  return { bg: "#10B981", text: "#FFFFFF", label: "Low Risk" };
+}
 
-  indicator.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 2147483647;
-    background: #111418;
-    color: #E6E8EB;
-    border: 1px solid #2A2D35;
-    border-radius: 8px;
-    padding: 8px 14px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-    transition: opacity 0.3s, transform 0.3s;
-    opacity: 0;
-    transform: translateY(10px);
-  `;
+function createFloatingGhostButton() {
+  if (document.getElementById("ghost-hunter-fab")) return;
 
-  document.body.appendChild(indicator);
+  const container = document.createElement("div");
+  container.id = "ghost-hunter-fab";
+  container.setAttribute("data-testid", "ghost-hunter-fab");
 
-  requestAnimationFrame(() => {
-    indicator.style.opacity = "1";
-    indicator.style.transform = "translateY(0)";
-  });
+  const existingStyle = document.getElementById("ghost-fab-styles");
+  if (existingStyle) existingStyle.remove();
 
-  indicator.addEventListener("click", () => {
-    indicator.style.opacity = "0";
-    indicator.style.transform = "translateY(10px)";
-    setTimeout(() => indicator.remove(), 300);
-  });
-
-  setTimeout(() => {
-    if (indicator.parentNode) {
-      indicator.style.opacity = "0";
-      indicator.style.transform = "translateY(10px)";
-      setTimeout(() => indicator.remove(), 300);
+  const style = document.createElement("style");
+  style.id = "ghost-fab-styles";
+  style.textContent = `
+    @keyframes ghost-fab-pulse {
+      0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+      50% { box-shadow: 0 4px 20px rgba(45,212,191,0.35); }
     }
-  }, 6000);
+    @keyframes ghost-fab-spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes ghost-fab-enter {
+      from { opacity: 0; transform: scale(0.5) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes ghost-fab-score-enter {
+      from { opacity: 0; transform: scale(0.7); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    #ghost-hunter-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2147483647;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      animation: ghost-fab-enter 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    #ghost-fab-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: #111418;
+      color: #2DD4BF;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+      position: relative;
+      animation: ghost-fab-pulse 3s ease-in-out infinite;
+    }
+    #ghost-fab-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+    #ghost-fab-btn:active {
+      transform: scale(0.95);
+    }
+    #ghost-fab-btn.scanning {
+      animation: none;
+      cursor: wait;
+    }
+    #ghost-fab-btn.scored {
+      animation: none;
+    }
+    #ghost-fab-spinner {
+      width: 22px;
+      height: 22px;
+      border: 2.5px solid rgba(45,212,191,0.2);
+      border-top-color: #2DD4BF;
+      border-radius: 50%;
+      animation: ghost-fab-spin 0.7s linear infinite;
+    }
+    #ghost-fab-tooltip {
+      position: absolute;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #111418;
+      color: #E6E8EB;
+      border: 1px solid #2A2D35;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    #ghost-fab-btn:hover + #ghost-fab-tooltip,
+    #ghost-fab-tooltip.visible {
+      opacity: 1;
+    }
+    #ghost-fab-result {
+      position: absolute;
+      right: 56px;
+      bottom: 0;
+      background: #111418;
+      border: 1px solid #2A2D35;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 12px;
+      color: #E6E8EB;
+      width: 220px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      animation: ghost-fab-score-enter 0.3s ease-out forwards;
+    }
+    #ghost-fab-result-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: #2A2D35;
+      color: #9CA3AF;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    #ghost-fab-result-close:hover {
+      background: #3A3D45;
+      color: #E6E8EB;
+    }
+    .ghost-fab-score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .ghost-fab-score-num {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .ghost-fab-score-label {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ghost-fab-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: #2A2D35;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .ghost-fab-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s ease-out;
+    }
+    .ghost-fab-meta {
+      font-size: 11px;
+      color: #9CA3AF;
+      line-height: 1.5;
+    }
+    .ghost-fab-flags {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #2A2D35;
+    }
+    .ghost-fab-flag-item {
+      font-size: 11px;
+      color: #F59E0B;
+      display: flex;
+      align-items: flex-start;
+      gap: 5px;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .ghost-fab-flag-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .ghost-fab-actions {
+      margin-top: 10px;
+      display: flex;
+      gap: 6px;
+    }
+    .ghost-fab-action-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #2A2D35;
+      background: transparent;
+      color: #E6E8EB;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .ghost-fab-action-btn:hover {
+      background: #1A1D25;
+      border-color: #3A3D45;
+    }
+    .ghost-fab-action-btn.primary {
+      background: #2DD4BF;
+      color: #111418;
+      border-color: #2DD4BF;
+    }
+    .ghost-fab-action-btn.primary:hover {
+      background: #14B8A6;
+      border-color: #14B8A6;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const ghostSvg = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 10h.01M15 10h.01M12 2a8 8 0 0 0-8 8v12l3-3 2 2 3-3 3 3 2-2 3 3V10a8 8 0 0 0-8-8z"/></svg>`;
+
+  const btn = document.createElement("button");
+  btn.id = "ghost-fab-btn";
+  btn.setAttribute("data-testid", "ghost-fab-btn");
+  btn.innerHTML = ghostSvg;
+
+  const tooltip = document.createElement("div");
+  tooltip.id = "ghost-fab-tooltip";
+  tooltip.textContent = "Scan for ghost job";
+
+  container.appendChild(btn);
+  container.appendChild(tooltip);
+  document.body.appendChild(container);
+
+  btn.addEventListener("click", () => {
+    if (ghostButtonState === "scanning") return;
+
+    const existingResult = document.getElementById("ghost-fab-result");
+    if (existingResult) existingResult.remove();
+
+    ghostButtonState = "scanning";
+    btn.classList.add("scanning");
+    btn.classList.remove("scored");
+    btn.innerHTML = `<div id="ghost-fab-spinner"></div>`;
+    tooltip.textContent = "Analyzing...";
+    tooltip.classList.add("visible");
+
+    const jobData = extractJobData();
+
+    if (!jobData.title && !jobData.company && !jobData.description) {
+      ghostButtonState = "idle";
+      btn.classList.remove("scanning");
+      btn.innerHTML = ghostSvg;
+      tooltip.textContent = "No job data found on this page";
+      tooltip.classList.add("visible");
+      setTimeout(() => tooltip.classList.remove("visible"), 3000);
+      return;
+    }
+
+    if (jobData.description && jobData.description.length > 5000) {
+      jobData.description = jobData.description.substring(0, 5000);
+    }
+
+    chrome.runtime.sendMessage(
+      { type: "SCAN_FROM_FAB", jobData },
+      (response) => {
+        tooltip.classList.remove("visible");
+
+        if (!response || response.error) {
+          ghostButtonState = "idle";
+          btn.classList.remove("scanning");
+          btn.innerHTML = ghostSvg;
+          tooltip.textContent = response?.error || "Analysis failed";
+          tooltip.classList.add("visible");
+          setTimeout(() => tooltip.classList.remove("visible"), 4000);
+          return;
+        }
+
+        const result = response.data;
+        const score = typeof result.ghostScore === "number" ? Math.max(0, Math.min(100, result.ghostScore)) : 0;
+        result.ghostScore = score;
+        const scoreInfo = getScoreColor(score);
+
+        ghostButtonState = "scored";
+        btn.classList.remove("scanning");
+        btn.classList.add("scored");
+        btn.style.background = scoreInfo.bg;
+        btn.style.color = scoreInfo.text;
+        btn.innerHTML = `<span style="font-size:16px;font-weight:700;line-height:1;">${result.ghostScore}</span>`;
+
+        showFabResult(result, container, btn, ghostSvg);
+      }
+    );
+  });
+}
+
+function showFabResult(result, container, btn, ghostSvg) {
+  const existing = document.getElementById("ghost-fab-result");
+  if (existing) existing.remove();
+
+  const scoreInfo = getScoreColor(result.ghostScore);
+  const panel = document.createElement("div");
+  panel.id = "ghost-fab-result";
+  panel.setAttribute("data-testid", "ghost-fab-result");
+
+  const closeBtn = document.createElement("button");
+  closeBtn.id = "ghost-fab-result-close";
+  closeBtn.setAttribute("data-testid", "ghost-fab-result-close");
+  closeBtn.textContent = "\u2715";
+  closeBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.remove();
+    ghostButtonState = "idle";
+    btn.style.background = "#111418";
+    btn.style.color = "#2DD4BF";
+    btn.classList.remove("scored");
+    btn.innerHTML = ghostSvg;
+  });
+  panel.appendChild(closeBtn);
+
+  const scoreRow = document.createElement("div");
+  scoreRow.className = "ghost-fab-score-row";
+
+  const scoreNum = document.createElement("span");
+  scoreNum.className = "ghost-fab-score-num";
+  scoreNum.style.color = scoreInfo.bg;
+  scoreNum.setAttribute("data-testid", "ghost-fab-score");
+  scoreNum.textContent = result.ghostScore;
+
+  const scoreLabel = document.createElement("span");
+  scoreLabel.className = "ghost-fab-score-label";
+  scoreLabel.style.background = scoreInfo.bg + "22";
+  scoreLabel.style.color = scoreInfo.bg;
+  scoreLabel.setAttribute("data-testid", "ghost-fab-risk-label");
+  scoreLabel.textContent = scoreInfo.label;
+
+  scoreRow.appendChild(scoreNum);
+  scoreRow.appendChild(scoreLabel);
+  panel.appendChild(scoreRow);
+
+  const bar = document.createElement("div");
+  bar.className = "ghost-fab-bar";
+  const barFill = document.createElement("div");
+  barFill.className = "ghost-fab-bar-fill";
+  barFill.style.background = scoreInfo.bg;
+  barFill.style.width = "0%";
+  bar.appendChild(barFill);
+  panel.appendChild(bar);
+  const boundedScore = Math.max(0, Math.min(100, result.ghostScore || 0));
+  setTimeout(() => { barFill.style.width = boundedScore + "%"; }, 50);
+
+  const meta = document.createElement("div");
+  meta.className = "ghost-fab-meta";
+  meta.setAttribute("data-testid", "ghost-fab-meta");
+
+  const parts = [];
+  parts.push("Confidence: " + (result.confidence || 0) + "%");
+  if (result.redFlags && result.redFlags.length > 0) {
+    parts.push(result.redFlags.length + " red flag" + (result.redFlags.length > 1 ? "s" : ""));
+  }
+  if (result.repostDetection && result.repostDetection.isRepost) {
+    parts.push("Repost detected (" + result.repostDetection.repostCount + "x)");
+  }
+  if (result.employerReputation) {
+    parts.push("Employer score: " + result.employerReputation.reputationScore + "/100");
+  }
+  meta.textContent = parts.join(" \u00B7 ");
+  panel.appendChild(meta);
+
+  if (result.redFlags && result.redFlags.length > 0) {
+    const flagsDiv = document.createElement("div");
+    flagsDiv.className = "ghost-fab-flags";
+    const topFlags = result.redFlags
+      .filter(f => f.severity === "critical" || f.severity === "high")
+      .slice(0, 3);
+    const showFlags = topFlags.length > 0 ? topFlags : result.redFlags.slice(0, 2);
+
+    for (const flag of showFlags) {
+      const item = document.createElement("div");
+      item.className = "ghost-fab-flag-item";
+      item.setAttribute("data-testid", "ghost-fab-flag");
+
+      const dot = document.createElement("span");
+      dot.className = "ghost-fab-flag-dot";
+      dot.style.background = flag.severity === "critical" ? "#EF4444" :
+                              flag.severity === "high" ? "#F97316" :
+                              flag.severity === "medium" ? "#F59E0B" : "#10B981";
+      item.appendChild(dot);
+
+      const text = document.createElement("span");
+      const msg = flag.message.length > 80 ? flag.message.substring(0, 77) + "..." : flag.message;
+      text.textContent = msg;
+      item.appendChild(text);
+
+      flagsDiv.appendChild(item);
+    }
+    panel.appendChild(flagsDiv);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "ghost-fab-actions";
+
+  const dismissBtn = document.createElement("button");
+  dismissBtn.className = "ghost-fab-action-btn";
+  dismissBtn.setAttribute("data-testid", "ghost-fab-dismiss");
+  dismissBtn.textContent = "Dismiss";
+  dismissBtn.addEventListener("click", () => {
+    panel.remove();
+    ghostButtonState = "idle";
+    btn.style.background = "#111418";
+    btn.style.color = "#2DD4BF";
+    btn.classList.remove("scored");
+    btn.innerHTML = ghostSvg;
+  });
+
+  const rescanBtn = document.createElement("button");
+  rescanBtn.className = "ghost-fab-action-btn primary";
+  rescanBtn.setAttribute("data-testid", "ghost-fab-rescan");
+  rescanBtn.textContent = "Re-scan";
+  rescanBtn.addEventListener("click", () => {
+    panel.remove();
+    ghostButtonState = "idle";
+    btn.style.background = "#111418";
+    btn.style.color = "#2DD4BF";
+    btn.classList.remove("scored");
+    btn.innerHTML = ghostSvg;
+    btn.click();
+  });
+
+  actions.appendChild(dismissBtn);
+  actions.appendChild(rescanBtn);
+  panel.appendChild(actions);
+
+  container.appendChild(panel);
 }
 
 function autoDetectJobPage() {
   if (isJobPostingPage()) {
-    createFloatingIndicator();
+    createFloatingGhostButton();
     try {
       chrome.runtime.sendMessage({ type: "JOB_PAGE_DETECTED" });
     } catch {}

@@ -123,6 +123,7 @@ The fallback analysis logic lives in `server/routes.ts` and uses pattern matchin
 - **Data Extraction**: JSON-LD JobPosting schema (primary), site-specific DOM selectors (fallback), OG meta tags (generic fallback)
 - **API**: Sends extracted job data to configured Ghost Job Detector `/api/analyze` endpoint (HTTPS enforced)
 - **CORS**: Backend has CORS headers on `/api/analyze` to allow extension requests
+- **Floating Ghost Button (FAB)**: Persistent floating button appears on job pages; click to scan directly from the page; shows score/color/result panel inline
 - **Auto-Scan**: Extension auto-detects job pages and scans when popup opens; badge shows "!" on job pages
 - **Security**: All dynamic content in popup uses safe DOM methods to prevent XSS
 - **Installation**: Load unpacked in Chrome (chrome://extensions > Developer mode > Load unpacked > select /extension folder)
