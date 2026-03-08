@@ -404,8 +404,14 @@ function isJobPostingPage() {
 
   if (host.includes("linkedin.com") && (path.includes("/jobs/") || path.includes("/jobs?") || href.includes("currentJobId="))) return true;
   if (host.includes("indeed.com") && (path.includes("/viewjob") || path.includes("/rc/clk") || path.includes("/jobs") || href.includes("vjk="))) return true;
-  if (host.includes("glassdoor.com") && (path.includes("/job-listing") || path.includes("/Job") || path.includes("/partner/jobListing") || path.includes("/job/"))) return true;
-  if (host.includes("ziprecruiter.com") && (path.includes("/jobs/") || path.includes("/c/") || path.includes("/job/"))) return true;
+  if (host.includes("glassdoor.com")) {
+    if (path.includes("/job-listing") || path.includes("/Job") || path.includes("/Jobs") || path.includes("/partner/jobListing") || path.includes("/job/") || path.includes("/job-")) return true;
+    if (document.querySelector('[data-test="jobListing"]') || document.querySelector('[data-test="job-title"]') || document.querySelector('[class*="JobDetails"]') || document.querySelector('.jobHeader') || document.querySelector('[data-test="jobDescriptionContent"]') || document.querySelector('#JobDescriptionContainer') || document.querySelector('[class*="jobDescription"]')) return true;
+  }
+  if (host.includes("ziprecruiter.com")) {
+    if (path.includes("/jobs/") || path.includes("/c/") || path.includes("/job/") || path.includes("/k/") || path.includes("/ojob/")) return true;
+    if (document.querySelector('[class*="job_content"]') || document.querySelector('[data-testid="job-detail"]') || document.querySelector('.jobDescriptionSection') || document.querySelector('#job_description') || document.querySelector('.job_description') || document.querySelector('[class*="job_title"]') || document.querySelector('h1.job_title')) return true;
+  }
 
   if (getJsonLdJobPosting()) return true;
 
@@ -895,9 +901,13 @@ function checkForSpaNavigation() {
 
 if (document.readyState === "complete" || document.readyState === "interactive") {
   setTimeout(autoDetectJobPage, 500);
+  setTimeout(autoDetectJobPage, 2000);
+  setTimeout(autoDetectJobPage, 4000);
 } else {
   window.addEventListener("DOMContentLoaded", () => {
     setTimeout(autoDetectJobPage, 500);
+    setTimeout(autoDetectJobPage, 2000);
+    setTimeout(autoDetectJobPage, 4000);
   });
 }
 
