@@ -155,7 +155,7 @@ export default function ExtensionPage() {
               data-testid="badge-version"
             >
               <Chrome className="w-3.5 h-3.5" />
-              Chrome Extension v1.1.1
+              Chrome Extension v1.2.0
             </motion.div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground" data-testid="text-page-title">
               Get Ghost Hunter Mode
