@@ -23,7 +23,7 @@ const commitments = [
     icon: Lock,
     title: "No Credentials or Accounts Accessed",
     description:
-      "We never access your job site accounts, login credentials, or private data. The extension operates on publicly visible page content only — the same text you can see and copy yourself.",
+      "We never access your job site accounts, login credentials, or private data. The extension operates on publicly visible page content only, the same text you can see and copy yourself.",
   },
   {
     icon: Globe,
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
               Ghost Job Detector is designed with a simple principle: <span className="font-semibold">we only analyze content that you voluntarily provide to us.</span> Our servers never reach out to LinkedIn, Indeed, Glassdoor, ZipRecruiter, or any other job site. We do not scrape, crawl, or make automated requests to third-party websites.
             </p>
             <p className="text-base text-muted-foreground leading-relaxed">
-              When you use our Chrome extension, it reads the content of the job listing page you are already viewing in your own browser — the same content visible on your screen. That text is then sent to our API for analysis. This is functionally identical to you copying and pasting the text yourself.
+              When you use our Chrome extension, it reads the content of the job listing page you are already viewing in your own browser, the same content visible on your screen. That text is then sent to our API for analysis. This is functionally identical to you copying and pasting the text yourself.
             </p>
           </motion.div>
 
@@ -144,7 +144,7 @@ export default function PrivacyPage() {
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 text-xs font-bold flex items-center justify-center mt-0.5">2</span>
                   <p className="text-sm text-foreground leading-relaxed">
-                    <span className="font-medium">The extension reads the visible page content</span> — job title, company name, description, and other details already displayed on your screen.
+                    <span className="font-medium">The extension reads the visible page content</span> including job title, company name, description, and other details already displayed on your screen.
                   </p>
                 </div>
                 <div className="flex items-start gap-3">

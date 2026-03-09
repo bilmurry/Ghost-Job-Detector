@@ -80,7 +80,7 @@ export default function AboutPage() {
             data-testid="section-mission"
           >
             <p className="text-base text-foreground leading-relaxed">
-              In today's hiring landscape, many job seekers spend hours applying to positions that may no longer be active, were posted only for data collection, or were never intended to be filled. These listings — often called "ghost jobs" — create frustration, waste time, and erode trust in online hiring platforms.
+              In today's hiring landscape, many job seekers spend hours applying to positions that may no longer be active, were posted only for data collection, or were never intended to be filled. These listings, often called "ghost jobs," create frustration, waste time, and erode trust in online hiring platforms.
             </p>
             <p className="text-base text-foreground leading-relaxed font-medium">
               Ghost Job Detector helps job seekers make more informed decisions before applying.

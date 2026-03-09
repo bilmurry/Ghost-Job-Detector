@@ -70,7 +70,7 @@ const steps = [
   {
     number: 6,
     title: "Start Scanning Jobs",
-    description: "Visit any job listing on LinkedIn, Indeed, Glassdoor, or ZipRecruiter. The ghost button appears automatically — click it to scan, or drag it anywhere on screen.",
+    description: "Visit any job listing on LinkedIn, Indeed, Glassdoor, or ZipRecruiter. The ghost button appears automatically. Click it to scan, or drag it anywhere on screen.",
     icon: Scan,
     color: "text-emerald-500",
     bgColor: "bg-emerald-500/10 dark:bg-emerald-500/15",
@@ -97,7 +97,7 @@ const features = [
   {
     icon: GripVertical,
     title: "Draggable Interface",
-    description: "Move the floating ghost button anywhere on screen — it stays where you put it.",
+    description: "Move the floating ghost button anywhere on screen. It stays where you put it.",
   },
   {
     icon: Globe,
@@ -161,7 +161,7 @@ export default function ExtensionPage() {
               Get Ghost Hunter Mode
             </h1>
             <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg leading-relaxed">
-              Install the Chrome extension to scan job listings for ghost jobs, scams, and red flags — directly from LinkedIn, Indeed, Glassdoor, and ZipRecruiter.
+              Install the Chrome extension to scan job listings for ghost jobs, scams, and red flags directly from LinkedIn, Indeed, Glassdoor, and ZipRecruiter.
             </p>
           </div>
 
@@ -289,7 +289,7 @@ export default function ExtensionPage() {
                 },
                 {
                   q: "The ghost button isn't appearing on a job page?",
-                  a: "Try refreshing the page. Some sites load content dynamically — the button checks for job content multiple times after page load. If it still doesn't appear, click the extension popup icon to manually scan.",
+                  a: "Try refreshing the page. Some sites load content dynamically, so the button checks for job content multiple times after page load. If it still doesn't appear, click the extension popup icon to manually scan.",
                 },
               ].map((faq, i) => (
                 <Card key={i} className="border bg-card/50 dark:bg-card/30" data-testid={`card-faq-${i}`}>

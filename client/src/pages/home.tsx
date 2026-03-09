@@ -661,7 +661,7 @@ function JobInputForm({
                   <div className="space-y-1.5">
                     <h3 className="text-sm font-semibold text-foreground">Scan directly from job sites</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Install our Chrome extension to scan job listings right from LinkedIn, Indeed, Glassdoor, and ZipRecruiter. The extension reads the page you're already viewing — no data is fetched from company servers.
+                      Install our Chrome extension to scan job listings right from LinkedIn, Indeed, Glassdoor, and ZipRecruiter. The extension reads the page you're already viewing. No data is fetched from company servers.
                     </p>
                     <Link href="/extension">
                       <Button variant="outline" size="sm" className="mt-2" data-testid="button-get-extension-cta">
@@ -1034,7 +1034,7 @@ export default function Home() {
           <div className="flex items-center justify-center gap-2" data-testid="link-mobile-app">
             <Smartphone className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">
-              Mobile App —{" "}
+              Mobile App:{" "}
               <span className="font-medium text-foreground">Coming Soon</span>
             </span>
           </div>
