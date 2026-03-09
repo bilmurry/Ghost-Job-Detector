@@ -1060,6 +1060,9 @@ export default function Home() {
           <p className="text-xs text-muted-foreground text-center" data-testid="text-footer-disclaimer">
             We never contact job sites directly. All content is provided by users via the Chrome extension or manual entry.
           </p>
+          <p className="text-xs text-muted-foreground text-center" data-testid="text-patent-pending">
+            Patent Pending
+          </p>
         </div>
       </footer>
     </div>
