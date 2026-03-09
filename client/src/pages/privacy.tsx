@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { usePageTracker } from "@/hooks/use-page-tracker";
+import { useSEO } from "@/hooks/use-seo";
 
 const commitments = [
   {
@@ -35,6 +36,11 @@ const commitments = [
 
 export default function PrivacyPage() {
   usePageTracker("privacy");
+  useSEO({
+    title: "Privacy & Data Practices | Ghost Job Detector",
+    description: "Ghost Job Detector never scrapes job sites. Learn how we handle your data, what the Chrome extension accesses, and our commitment to user privacy.",
+    path: "/privacy",
+  });
 
   return (
     <div className="min-h-screen bg-background">

@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useSEO } from "@/hooks/use-seo";
 import {
   Ghost,
   AlertTriangle,
@@ -850,6 +851,11 @@ export default function Home() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   usePageTracker();
+  useSEO({
+    title: "Ghost Job Detector | Spot Fake Job Listings Before You Apply",
+    description: "Free AI-powered tool to detect ghost jobs, scam indicators, and red flags in job postings. Scan listings from LinkedIn, Indeed, Glassdoor, and ZipRecruiter instantly.",
+    path: "/",
+  });
 
   const analyzeMutation = useMutation({
     mutationFn: async (data: JobPosting) => {

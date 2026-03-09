@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { usePageTracker } from "@/hooks/use-page-tracker";
+import { useSEO } from "@/hooks/use-seo";
 
 const principles = [
   {
@@ -32,6 +33,11 @@ const principles = [
 
 export default function AboutPage() {
   usePageTracker("about");
+  useSEO({
+    title: "About Ghost Job Detector | Our Mission",
+    description: "Ghost Job Detector brings transparency to the modern job search. Learn about our mission to help job seekers identify ghost jobs, fake listings, and hiring scams.",
+    path: "/about",
+  });
 
   return (
     <div className="min-h-screen bg-background">
