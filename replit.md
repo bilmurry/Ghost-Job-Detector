@@ -128,12 +128,14 @@ The fallback analysis logic lives in `server/routes.ts` and uses pattern matchin
 - **Security**: All dynamic content in popup uses safe DOM methods to prevent XSS
 - **Installation**: Load unpacked in Chrome (chrome://extensions > Developer mode > Load unpacked > select /extension folder)
 - **Extension Page**: `/extension` route — instruction page with download link, installation guide, features, supported sites, FAQ
+- **Privacy Page**: `/privacy` route — privacy & data practices page explaining no server-side scraping, user-controlled data, extension permissions, data flow
 - **Download**: `/extension/ghost-hunter-mode.zip` — pre-built zip of the extension for easy download
+- **No Server-Side Scraping**: `/api/scrape-url` endpoint has been removed; all job content comes from users via extension or manual entry
 
 ### Security Middleware
 - **File**: `server/middleware.ts` - Custom security middleware (no external dependencies)
 - **Security Headers**: X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy, Strict-Transport-Security
-- **Rate Limiting**: In-memory rate limiter with configurable windows. General API: 30 req/min, Analyze/Scrape: 10 req/min
+- **Rate Limiting**: In-memory rate limiter with configurable windows. General API: 30 req/min, Analyze: 10 req/min
 - **Request Size Limiting**: 100KB max request body
 - **Error Boundary**: React ErrorBoundary component wraps the entire app (client/src/components/error-boundary.tsx)
 

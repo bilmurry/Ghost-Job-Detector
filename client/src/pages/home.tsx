@@ -1148,8 +1148,21 @@ export default function Home() {
               <span className="font-medium text-foreground">Coming Soon</span>
             </span>
           </div>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/privacy">
+              <span className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-privacy-footer">
+                Privacy & Data Practices
+              </span>
+            </Link>
+            <span className="text-xs text-muted-foreground">·</span>
+            <Link href="/about">
+              <span className="text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer" data-testid="link-about-footer">
+                About
+              </span>
+            </Link>
+          </div>
           <p className="text-xs text-muted-foreground text-center" data-testid="text-footer-disclaimer">
-            Insights are generated from publicly available job listings using automated analysis.
+            We never contact job sites directly. All content is provided by users via the Chrome extension or manual entry.
           </p>
         </div>
       </footer>

@@ -40,7 +40,6 @@ const analyzeLimiter = rateLimit({
 });
 
 app.use("/api/analyze", analyzeLimiter);
-app.use("/api/scrape-url", analyzeLimiter);
 app.use("/api/", apiLimiter);
 
 export function log(message: string, source = "express") {

@@ -9,6 +9,7 @@ import History from "@/pages/history";
 import Admin from "@/pages/admin";
 import ExtensionPage from "@/pages/extension";
 import AboutPage from "@/pages/about";
+import PrivacyPage from "@/pages/privacy";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/extension" component={ExtensionPage} />
       <Route path="/about" component={AboutPage} />
+      <Route path="/privacy" component={PrivacyPage} />
       <Route component={NotFound} />
     </Switch>
   );
