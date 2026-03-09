@@ -806,6 +806,28 @@ function createFloatingGhostButton() {
     container.style.top = newY + "px";
     container.style.right = "auto";
     container.style.bottom = "auto";
+
+    const panel = document.getElementById("ghost-fab-result");
+    if (panel) {
+      const fabCenterX = newX + btnSize / 2;
+      const fabCenterY = newY + btnSize / 2;
+      const panelWidth = 340;
+      const panelPad = 12;
+      let panelLeft;
+      if (fabCenterX > panelWidth + panelPad + 60) {
+        panelLeft = newX - panelWidth - panelPad;
+      } else {
+        panelLeft = newX + btnSize + panelPad;
+      }
+      panelLeft = Math.max(8, Math.min(panelLeft, window.innerWidth - panelWidth - 8));
+      const panelHeight = panel.offsetHeight;
+      let panelTop = fabCenterY - panelHeight / 2;
+      panelTop = Math.max(8, Math.min(panelTop, window.innerHeight - panelHeight - 8));
+      panel.style.left = panelLeft + "px";
+      panel.style.top = panelTop + "px";
+      panel.style.bottom = "auto";
+    }
+
     e.preventDefault();
   }
 
