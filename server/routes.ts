@@ -787,8 +787,11 @@ export async function registerRoutes(
       const parseResult = jobPostingSchema.safeParse(req.body);
       
       if (!parseResult.success) {
+        const hasDescIssue = parseResult.error.issues.some(i => i.path.includes("description"));
         return res.status(400).json({
-          error: "Invalid job posting data",
+          error: hasDescIssue
+            ? "Could not extract job description from this page. Try scrolling down to load the full listing, then scan again."
+            : "Invalid job posting data",
           details: parseResult.error.issues,
         });
       }

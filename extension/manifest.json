@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Ghost Hunter Mode",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Activate Ghost Hunter Mode — scan job postings for red flags, scam indicators, and ghost jobs.",
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": [

@@ -186,14 +186,45 @@ function extractSiteSpecific() {
   }
 
   if (host.includes("indeed.com")) {
+    let indeedDesc = pickFirst(
+      queryText([
+        '#jobDescriptionText',
+        '.jobsearch-JobComponent-description',
+        '#jobDescriptionSection',
+        '#jobsearch-ViewjobPaneWrapper .jobsearch-jobDescriptionText',
+        'div.jobsearch-jobDescriptionText',
+        '[data-testid="jobDescriptionText"]',
+        '[data-testid="job-description"]',
+        '.jobDescription',
+        '#job-description',
+        '.job-description',
+        '[class*="jobDescription"]',
+        '[class*="JobDescription"]',
+        '#mosaic-provider-jobcards .jobCardShelfContainer',
+        '.jobsearch-BodyContainer',
+      ])
+    );
+    if (!indeedDesc) {
+      const mainContent = document.querySelector('#mosaic-provider-jobcards') ||
+                          document.querySelector('[class*="jobsearch"]') ||
+                          document.querySelector('main');
+      if (mainContent) {
+        const text = cleanText(mainContent.innerText || mainContent.textContent || "");
+        if (text.length > 100) indeedDesc = text.substring(0, 5000);
+      }
+    }
     return {
       title: pickFirst(
         queryText([
           'h1[data-testid="jobsearch-JobInfoHeader-title"]',
           '.jobsearch-JobInfoHeader-title',
+          '[data-testid="simpleHeader-title"]',
+          '[data-testid="job-title"]',
           'h2.jobTitle span',
           'h2.jobTitle',
           'h1.icl-u-xs-mb--xs',
+          'h1.jobsearch-JobInfoHeader-title',
+          '[class*="JobInfoHeader"] h1',
           'h1',
         ]),
         getMeta("og:title")
@@ -203,37 +234,36 @@ function extractSiteSpecific() {
           '[data-testid="inlineHeader-companyName"] a',
           '[data-testid="inlineHeader-companyName"]',
           '[data-testid="company-name"]',
+          '[data-testid="simpleHeader-companyName"]',
           '[data-company-name="true"]',
           '.jobsearch-CompanyInfoWithoutHeaderImage a',
           '.icl-u-lg-mr--sm a',
           'div[data-company-name] a',
           '.companyName',
+          '[class*="CompanyName"]',
+          '[class*="companyName"]',
         ])
       ),
-      description: pickFirst(
-        queryText([
-          '#jobDescriptionText',
-          '.jobsearch-JobComponent-description',
-          '#jobDescriptionSection',
-          '#jobsearch-ViewjobPaneWrapper .jobsearch-jobDescriptionText',
-          'div.jobsearch-jobDescriptionText',
-        ])
-      ),
+      description: indeedDesc,
       salary: pickFirst(
         queryText([
           '#salaryInfoAndJobType span',
           '[data-testid="attribute_snippet_testid"]',
+          '[data-testid="jobsearch-SalaryInfoAndJobType"]',
           '.jobsearch-JobMetadataHeader-item',
           '.salary-snippet-container',
           '.attribute_snippet',
+          '[class*="salaryInfo"]',
         ])
       ),
       location: pickFirst(
         queryText([
           '[data-testid="inlineHeader-companyLocation"]',
           '[data-testid="job-location"]',
+          '[data-testid="simpleHeader-companyLocation"]',
           '.jobsearch-JobInfoHeader-subtitle div:last-child',
           '.companyLocation',
+          '[class*="companyLocation"]',
         ])
       )
     };
@@ -550,6 +580,7 @@ function createFloatingGhostButton() {
       position: fixed;
       bottom: auto;
       right: auto;
+      z-index: 2147483647;
       background: #111418;
       border: 1px solid #2A2D35;
       border-radius: 12px;
@@ -646,23 +677,27 @@ function createFloatingGhostButton() {
       position: absolute;
       top: 8px;
       right: 8px;
-      width: 18px;
-      height: 18px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
-      border: none;
+      border: 1px solid #3A3D45;
       background: #2A2D35;
-      color: #9CA3AF;
+      color: #D1D5DB;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 15px;
+      font-weight: 600;
       line-height: 1;
-      transition: background 0.15s;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+      z-index: 1;
     }
     #ghost-fab-result-close:hover {
-      background: #3A3D45;
-      color: #E6E8EB;
+      background: #EF4444;
+      border-color: #EF4444;
+      color: #FFFFFF;
+      transform: scale(1.1);
     }
     .ghost-fab-score-row {
       display: flex;
