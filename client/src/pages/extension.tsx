@@ -320,6 +320,12 @@ export default function ExtensionPage() {
               </Button>
             </Link>
           </div>
+
+          <footer className="text-center pb-6 pt-2 border-t border-border/40">
+            <p className="text-xs text-muted-foreground" data-testid="text-footer">
+              GhostJobDetector 2026
+            </p>
+          </footer>
         </motion.div>
       </main>
     </div>

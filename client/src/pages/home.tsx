@@ -1237,6 +1237,9 @@ export default function Home() {
           <p className="text-xs text-muted-foreground text-center" data-testid="text-patent-pending">
             Patent Pending
           </p>
+          <p className="text-xs text-muted-foreground text-center" data-testid="text-footer-name">
+            GhostJobDetector 2026
+          </p>
         </div>
       </footer>
     </div>
