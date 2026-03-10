@@ -1,6 +1,7 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
-import { rm, readFile } from "fs/promises";
+import { rm, readFile, writeFile, mkdir } from "fs/promises";
+import { dirname } from "path";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -32,8 +33,19 @@ const allowlist = [
   "zod-validation-error",
 ];
 
+async function syncExtensionVersion() {
+  const manifest = JSON.parse(await readFile("extension/manifest.json", "utf-8"));
+  const outputPath = "client/src/lib/extension-version.ts";
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, `export const EXTENSION_VERSION = "${manifest.version}";\n`);
+  console.log(`synced extension version: ${manifest.version}`);
+}
+
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
+
+  console.log("syncing extension version...");
+  await syncExtensionVersion();
 
   console.log("building client...");
   await viteBuild();
