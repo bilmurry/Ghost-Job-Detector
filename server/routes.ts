@@ -12,6 +12,8 @@ import {
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { analysisStorage } from "./storage";
 import { analyzeJobWithAI } from "./ghostAI";
+import { analyzeLanguageWithClaude } from "./claudeAI";
+import { verifyWithPerplexity } from "./perplexityAI";
 import { db } from "./db";
 import { users, analyses, pageViews, employerScores } from "@shared/models/auth";
 import { sql, desc, count, eq } from "drizzle-orm";
@@ -793,12 +795,109 @@ export async function registerRoutes(
 
       let result: AnalysisResult;
 
-      try {
-        result = await analyzeJobWithAI(parseResult.data);
-      } catch (aiError) {
-        console.error("AI analysis failed, falling back to rule engine:", aiError);
+      const aiModels: AnalysisResult["aiModels"] = {
+        chatgpt: { scored: false },
+        claude: { scored: false },
+        perplexity: { scored: false },
+      };
+
+      const [chatgptResult, claudeResult, perplexityResult] = await Promise.allSettled([
+        analyzeJobWithAI(parseResult.data),
+        analyzeLanguageWithClaude(parseResult.data),
+        parseResult.data.company ? verifyWithPerplexity(parseResult.data) : Promise.resolve(null),
+      ]);
+
+      if (chatgptResult.status === "fulfilled") {
+        result = chatgptResult.value;
+        aiModels.chatgpt.scored = true;
+      } else {
+        console.error("ChatGPT analysis failed, falling back to rule engine:", chatgptResult.reason);
         result = analyzeJobPosting(parseResult.data);
       }
+
+      if (claudeResult.status === "fulfilled") {
+        const claude = claudeResult.value;
+        aiModels.claude = {
+          scored: true,
+          languageAnalysis: {
+            manipulativeLanguage: claude.manipulativeLanguage,
+            vaguenessScore: claude.vaguenesScore,
+            professionalismScore: claude.professionalismScore,
+            writingQualityNotes: claude.writingQualityNotes,
+            overallAssessment: claude.overallAssessment,
+          },
+        };
+
+        result.redFlags.push(...claude.toneFlags);
+
+        if (claude.manipulativeLanguage) {
+          const manipBonus = 8;
+          result.ghostScore = Math.min(100, result.ghostScore + manipBonus);
+        }
+        if (claude.vaguenesScore > 70) {
+          const vagueBonus = Math.round((claude.vaguenesScore - 70) / 5);
+          result.ghostScore = Math.min(100, result.ghostScore + vagueBonus);
+        }
+        if (claude.professionalismScore < 30) {
+          const profPenalty = Math.round((30 - claude.professionalismScore) / 5);
+          result.ghostScore = Math.min(100, result.ghostScore + profPenalty);
+        }
+
+        result.riskLevel = getRiskLevel(result.ghostScore);
+      } else {
+        console.error("Claude analysis failed:", claudeResult.reason);
+      }
+
+      if (perplexityResult.status === "fulfilled" && perplexityResult.value !== null) {
+        const pplx = perplexityResult.value;
+        aiModels.perplexity = {
+          scored: true,
+          verification: {
+            companyExists: pplx.companyExists,
+            companyVerified: pplx.companyVerified,
+            companySummary: pplx.companySummary,
+            industryMatch: pplx.industryMatch,
+            webPresenceScore: pplx.webPresenceScore,
+            sources: pplx.sources,
+          },
+        };
+
+        result.redFlags.push(...pplx.verificationFlags);
+
+        if (!pplx.companyExists) {
+          result.ghostScore = Math.min(100, result.ghostScore + 15);
+          result.redFlags.push({
+            severity: "critical",
+            message: "[Verified] Company could not be found in web searches -- may not exist",
+            category: "company",
+          });
+        } else if (!pplx.companyVerified) {
+          result.ghostScore = Math.min(100, result.ghostScore + 8);
+        }
+
+        if (!pplx.industryMatch && pplx.companyExists) {
+          result.ghostScore = Math.min(100, result.ghostScore + 5);
+          result.redFlags.push({
+            severity: "medium",
+            message: "[Verified] Job title does not match the company's known industry or business",
+            category: "company",
+          });
+        }
+
+        if (pplx.webPresenceScore < 20 && pplx.companyExists) {
+          result.ghostScore = Math.min(100, result.ghostScore + 5);
+        }
+
+        if (pplx.companyVerified && pplx.webPresenceScore > 70) {
+          result.confidence = Math.min(100, result.confidence + 10);
+        }
+
+        result.riskLevel = getRiskLevel(result.ghostScore);
+      } else {
+        console.error("Perplexity verification failed:", perplexityResult.reason);
+      }
+
+      result.aiModels = aiModels;
       
       const jobData = parseResult.data;
       const salaryStr = typeof jobData.salary === "number" ? String(jobData.salary) : (jobData.salary || "");

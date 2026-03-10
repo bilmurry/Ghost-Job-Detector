@@ -34,6 +34,11 @@ import {
   Calendar,
   Repeat2,
   Chrome,
+  Brain,
+  Eye,
+  Sparkles,
+  ShieldCheck,
+  Languages,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -581,6 +586,175 @@ function ResultsDisplay({ result }: { result: AnalysisResult }) {
           <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">Repost Detection</h3>
           <RepostDetectionSection data={result.repostDetection} />
         </div>
+      )}
+
+      {result.aiModels && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+        >
+          <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground mb-4">AI Analysis Layer</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <Card className={result.aiModels.chatgpt.scored ? "border-green-500/30" : "border-muted"}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Brain className="w-4 h-4 text-green-500" />
+                  <span className="text-sm font-semibold" data-testid="text-model-chatgpt">ChatGPT</span>
+                  {result.aiModels.chatgpt.scored ? (
+                    <Badge variant="secondary" className="ml-auto text-xs bg-green-500/10 text-green-600 dark:text-green-400">Active</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="ml-auto text-xs">Fallback</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Risk scoring and red flag detection</p>
+              </CardContent>
+            </Card>
+
+            <Card className={result.aiModels.claude.scored ? "border-violet-500/30" : "border-muted"}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Languages className="w-4 h-4 text-violet-500" />
+                  <span className="text-sm font-semibold" data-testid="text-model-claude">Claude</span>
+                  {result.aiModels.claude.scored ? (
+                    <Badge variant="secondary" className="ml-auto text-xs bg-violet-500/10 text-violet-600 dark:text-violet-400">Active</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="ml-auto text-xs">Unavailable</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Language and tone analysis</p>
+              </CardContent>
+            </Card>
+
+            <Card className={result.aiModels.perplexity.scored ? "border-blue-500/30" : "border-muted"}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Globe className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-semibold" data-testid="text-model-perplexity">Perplexity</span>
+                  {result.aiModels.perplexity.scored ? (
+                    <Badge variant="secondary" className="ml-auto text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400">Active</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="ml-auto text-xs">Unavailable</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Company verification via web search</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {result.aiModels.claude.scored && result.aiModels.claude.languageAnalysis && (
+            <Card className="mt-3">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Languages className="w-4 h-4 text-violet-500" />
+                  <span className="text-sm font-semibold">Language Analysis</span>
+                  <span className="text-xs text-muted-foreground">by Claude</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-vagueness-score" style={{ color: result.aiModels.claude.languageAnalysis.vaguenessScore > 60 ? '#F59E0B' : '#10B981' }}>
+                      {result.aiModels.claude.languageAnalysis.vaguenessScore}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Vagueness</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-professionalism-score" style={{ color: result.aiModels.claude.languageAnalysis.professionalismScore > 60 ? '#10B981' : '#F59E0B' }}>
+                      {result.aiModels.claude.languageAnalysis.professionalismScore}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Professionalism</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3 text-center col-span-2 sm:col-span-1">
+                    <div className="text-lg font-bold" data-testid="text-manipulative" style={{ color: result.aiModels.claude.languageAnalysis.manipulativeLanguage ? '#EF4444' : '#10B981' }}>
+                      {result.aiModels.claude.languageAnalysis.manipulativeLanguage ? "Yes" : "No"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Manipulative</div>
+                  </div>
+                </div>
+                {result.aiModels.claude.languageAnalysis.overallAssessment && (
+                  <p className="text-sm text-muted-foreground" data-testid="text-language-assessment">
+                    {result.aiModels.claude.languageAnalysis.overallAssessment}
+                  </p>
+                )}
+                {result.aiModels.claude.languageAnalysis.writingQualityNotes.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {result.aiModels.claude.languageAnalysis.writingQualityNotes.map((note, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <span className="text-violet-500 mt-0.5">-</span>
+                        <span>{note}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {result.aiModels.perplexity.scored && result.aiModels.perplexity.verification && (
+            <Card className="mt-3">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="w-4 h-4 text-blue-500" />
+                  <span className="text-sm font-semibold">Company Verification</span>
+                  <span className="text-xs text-muted-foreground">by Perplexity</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-company-exists" style={{ color: result.aiModels.perplexity.verification.companyExists ? '#10B981' : '#EF4444' }}>
+                      {result.aiModels.perplexity.verification.companyExists ? "Yes" : "No"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Exists</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-company-verified" style={{ color: result.aiModels.perplexity.verification.companyVerified ? '#10B981' : '#F59E0B' }}>
+                      {result.aiModels.perplexity.verification.companyVerified ? "Yes" : "No"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Verified</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-industry-match" style={{ color: result.aiModels.perplexity.verification.industryMatch ? '#10B981' : '#F59E0B' }}>
+                      {result.aiModels.perplexity.verification.industryMatch ? "Yes" : "No"}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Industry Match</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/50 p-3 text-center">
+                    <div className="text-lg font-bold" data-testid="text-web-presence" style={{ color: result.aiModels.perplexity.verification.webPresenceScore > 50 ? '#10B981' : '#F59E0B' }}>
+                      {result.aiModels.perplexity.verification.webPresenceScore}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Web Presence</div>
+                  </div>
+                </div>
+                {result.aiModels.perplexity.verification.companySummary && (
+                  <p className="text-sm text-muted-foreground mb-2" data-testid="text-company-summary">
+                    {result.aiModels.perplexity.verification.companySummary}
+                  </p>
+                )}
+                {result.aiModels.perplexity.verification.sources.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {result.aiModels.perplexity.verification.sources
+                      .filter((source) => {
+                        try { const u = new URL(source); return u.protocol === 'http:' || u.protocol === 'https:'; } catch { return false; }
+                      })
+                      .map((source, i) => (
+                      <a
+                        key={i}
+                        href={source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-blue-500 hover:text-blue-400 bg-blue-500/10 rounded px-2 py-0.5"
+                        data-testid={`link-source-${i}`}
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {(() => {
+                          try { return new URL(source).hostname.replace('www.', ''); } catch { return 'source'; }
+                        })()}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </motion.div>
       )}
 
     </motion.div>

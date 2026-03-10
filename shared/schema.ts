@@ -57,6 +57,29 @@ export interface EmployerReputation {
   lastUpdated: string | null;
 }
 
+export interface LanguageAnalysis {
+  manipulativeLanguage: boolean;
+  vaguenessScore: number;
+  professionalismScore: number;
+  writingQualityNotes: string[];
+  overallAssessment: string;
+}
+
+export interface CompanyVerification {
+  companyExists: boolean;
+  companyVerified: boolean;
+  companySummary: string;
+  industryMatch: boolean;
+  webPresenceScore: number;
+  sources: string[];
+}
+
+export interface AIModelContributions {
+  chatgpt: { scored: boolean };
+  claude: { scored: boolean; languageAnalysis?: LanguageAnalysis };
+  perplexity: { scored: boolean; verification?: CompanyVerification };
+}
+
 export interface AnalysisResult {
   ghostScore: number;
   confidence: number;
@@ -71,4 +94,5 @@ export interface AnalysisResult {
   };
   repostDetection?: RepostDetection;
   employerReputation?: EmployerReputation;
+  aiModels?: AIModelContributions;
 }

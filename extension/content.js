@@ -1146,6 +1146,27 @@ function showFabResult(result, container, btn, ghostImg) {
   actions.appendChild(rescanBtn);
   panel.appendChild(actions);
 
+  if (result.aiModels) {
+    const aiDiv = document.createElement("div");
+    aiDiv.className = "ghost-fab-section";
+    aiDiv.style.cssText = "display:flex;gap:4px;justify-content:center;padding-top:8px;";
+
+    const models = [
+      { name: "ChatGPT", active: result.aiModels.chatgpt?.scored, color: "#10B981" },
+      { name: "Claude", active: result.aiModels.claude?.scored, color: "#8B5CF6" },
+      { name: "Perplexity", active: result.aiModels.perplexity?.scored, color: "#3B82F6" },
+    ];
+
+    for (const m of models) {
+      const tag = document.createElement("span");
+      tag.style.cssText = `font-size:9px;padding:2px 6px;border-radius:3px;background:${m.active ? m.color + "20" : "#1A1D25"};color:${m.active ? m.color : "#4B5563"};border:1px solid ${m.active ? m.color + "40" : "#2A2D35"};`;
+      tag.textContent = m.name;
+      aiDiv.appendChild(tag);
+    }
+
+    panel.appendChild(aiDiv);
+  }
+
   document.body.appendChild(panel);
 
   const fabRect = btn.getBoundingClientRect();

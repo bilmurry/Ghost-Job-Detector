@@ -37,7 +37,9 @@ Preferred communication style: Simple, everyday language.
 │       └── lib/            # Utilities and query client
 ├── server/          # Express backend
 │   ├── routes.ts    # API route definitions with rule-based analysis logic
-│   ├── ghostAI.ts   # AI-powered analysis using OpenAI
+│   ├── ghostAI.ts   # AI scoring using ChatGPT (OpenAI)
+│   ├── claudeAI.ts  # Language/tone analysis using Claude (Anthropic)
+│   ├── perplexityAI.ts # Company verification using Perplexity (web search)
 │   ├── storage.ts   # Database-backed data storage
 │   └── static.ts    # Static file serving for production
 ├── shared/          # Shared types and schemas
@@ -45,15 +47,32 @@ Preferred communication style: Simple, everyday language.
 └── migrations/      # Drizzle database migrations
 ```
 
-### AI Integration
-- **Provider**: OpenAI via Replit AI Integrations (no separate API key needed)
-- **Model**: gpt-5-mini for job analysis
-- **File**: `server/ghostAI.ts` - AI analysis function with structured JSON output
-- **Strategy**: AI is the primary scoring engine; rule-based analysis is fallback only
-  - AI returns full AnalysisResult including detailedAnalysis breakdown
-  - If AI throws, falls back to rule-based `analyzeJobPosting()`
-  - ghostAI.ts throws errors (no silent null returns)
-- **Environment Variables**: AI_INTEGRATIONS_OPENAI_API_KEY, AI_INTEGRATIONS_OPENAI_BASE_URL
+### AI Analysis Layer (Three-Model Pipeline)
+All three models run in parallel via `Promise.allSettled`. Each can fail independently without blocking the others.
+
+1. **ChatGPT (OpenAI)** -- Risk Scoring
+   - **Provider**: OpenAI via Replit AI Integrations
+   - **Model**: gpt-5-mini
+   - **File**: `server/ghostAI.ts`
+   - **Role**: Primary ghost score, red flags, detailed analysis breakdown
+   - **Fallback**: Rule-based engine in `routes.ts` if ChatGPT fails
+   - **Env**: AI_INTEGRATIONS_OPENAI_API_KEY, AI_INTEGRATIONS_OPENAI_BASE_URL
+
+2. **Claude (Anthropic)** -- Language Analysis
+   - **Provider**: Anthropic via Replit AI Integrations
+   - **Model**: claude-sonnet-4-6
+   - **File**: `server/claudeAI.ts`
+   - **Role**: Linguistic analysis (vagueness, professionalism, manipulative language, tone)
+   - **Scoring impact**: Manipulative language +8, high vagueness +1-6, low professionalism +1-6
+   - **Env**: AI_INTEGRATIONS_ANTHROPIC_API_KEY, AI_INTEGRATIONS_ANTHROPIC_BASE_URL
+
+3. **Perplexity** -- Company Verification
+   - **Provider**: Perplexity API (user-provided key)
+   - **Model**: sonar
+   - **File**: `server/perplexityAI.ts`
+   - **Role**: Web search to verify company existence, web presence, industry match
+   - **Scoring impact**: Company not found +15, not verified +8, industry mismatch +5, low web presence +5
+   - **Env**: PERPLEXITY_API_KEY
 
 ### Rule-Based Fallback Engine
 The fallback analysis logic lives in `server/routes.ts` and uses pattern matching against:
