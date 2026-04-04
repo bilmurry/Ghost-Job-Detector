@@ -47,8 +47,16 @@ Preferred communication style: Simple, everyday language.
 └── migrations/      # Drizzle database migrations
 ```
 
-### AI Analysis Layer (Three-Model Pipeline)
-All three models run in parallel via `Promise.allSettled`. Each can fail independently without blocking the others.
+### AI Analysis Layer (Agentic Sequential Pipeline)
+Orchestrated by `server/agentPipeline.ts`. Each model runs in sequence, feeding context forward. The pipeline can loop if Claude requests additional web research.
+
+**Flow:**
+```
+Step 1 → Perplexity: gather company context from live web search
+Step 2 → Claude: deep language analysis WITH company context baked in
+Step 3 → (if Claude.needsMoreInfo) → Perplexity follow-up search → Claude re-analysis
+Step 4 → ChatGPT: final scoring with ALL accumulated context
+```
 
 1. **ChatGPT (OpenAI)** -- Risk Scoring
    - **Provider**: OpenAI via Replit AI Integrations

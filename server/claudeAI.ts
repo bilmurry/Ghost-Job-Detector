@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { RedFlag, RedFlagSeverity } from "@shared/schema";
+import type { PerplexityVerification } from "./perplexityAI";
 
 const anthropic = new Anthropic({
   apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
@@ -13,15 +14,21 @@ export interface ClaudeLanguageAnalysis {
   professionalismScore: number;
   writingQualityNotes: string[];
   overallAssessment: string;
+  needsMoreInfo: boolean;
+  followUpQuery?: string;
 }
 
-export async function analyzeLanguageWithClaude(jobData: {
-  title: string;
-  company: string;
-  description: string;
-  salary?: string | number;
-  requirements?: string;
-}): Promise<ClaudeLanguageAnalysis> {
+export async function analyzeLanguageWithClaude(
+  jobData: {
+    title: string;
+    company: string;
+    description: string;
+    salary?: string | number;
+    requirements?: string;
+  },
+  companyContext?: PerplexityVerification,
+  extraContext?: PerplexityVerification
+): Promise<ClaudeLanguageAnalysis> {
   const jobText = [
     `Job Title: ${jobData.title}`,
     `Company: ${jobData.company}`,
@@ -32,41 +39,47 @@ export async function analyzeLanguageWithClaude(jobData: {
     .filter(Boolean)
     .join("\n");
 
+  const contextSection = buildContextSection(companyContext, extraContext);
+
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 2048,
     messages: [
       {
         role: "user",
-        content: `You are a linguistics expert analyzing job postings for deceptive, manipulative, or low-quality language patterns. Focus purely on the LANGUAGE and WRITING -- not business logic.
+        content: `You are a senior investigative analyst combining linguistics expertise with company intelligence to detect ghost jobs, scam postings, and misleading listings.
 
-Analyze this job posting and return ONLY valid JSON matching this schema:
+${contextSection ? `COMPANY INTELLIGENCE (from web search):\n${contextSection}\n\n` : ""}Analyze this job posting for deceptive language, suspicious patterns, and red flags. Use the company intelligence above to inform your language analysis — e.g., if the company is unverified, vague language becomes MORE suspicious; if the company is well-established, some generic language may be acceptable.
+
+Return ONLY valid JSON matching this schema:
 {
   "toneFlags": [
     {
       "severity": "critical" | "high" | "medium" | "low",
-      "message": "description of the language issue",
+      "message": "specific issue found",
       "category": "content" | "company" | "patterns" | "communication"
     }
   ],
   "manipulativeLanguage": true/false,
-  "vaguenessScore": 0-100 (how vague is the posting, higher = more vague),
-  "professionalismScore": 0-100 (how professional is the writing, higher = more professional),
-  "writingQualityNotes": ["specific observations about writing quality"],
-  "overallAssessment": "1-2 sentence summary of language analysis"
+  "vaguenessScore": 0-100 (higher = more vague),
+  "professionalismScore": 0-100 (higher = more professional),
+  "writingQualityNotes": ["specific observations"],
+  "overallAssessment": "1-2 sentence summary",
+  "needsMoreInfo": true/false (set true if a specific unanswered question about this company/posting would meaningfully change your assessment),
+  "followUpQuery": "specific web search query to resolve uncertainty (only if needsMoreInfo is true, max 1 query)"
 }
 
 Look for:
-- Emotional manipulation (fear of missing out, artificial urgency, flattery)
-- Evasive or deliberately vague language about job duties, pay, or company identity
-- Inconsistent tone (mixing corporate speak with informal hype)
-- Copy-paste or template language that suggests mass-produced listings
-- Grammatical patterns common in scam postings (odd phrasing, non-native patterns used to evade filters)
+- Emotional manipulation (FOMO, artificial urgency, flattery)
+- Evasive or vague language about duties, pay, or company identity
+- Inconsistent tone (corporate speak mixed with informal hype)
+- Template/copy-paste language in mass-produced listings
+- Grammatical patterns common in scam postings
 - Overuse of buzzwords without substance
-- Passive voice to hide who does what
 - Promises without specifics
+- Mismatches between company context (from web search) and how the company describes itself in the posting
 
-Be fair. Many legitimate postings use some marketing language. Flag only genuinely concerning patterns.
+Only set needsMoreInfo=true if the follow-up would genuinely change your red flag assessment — not just for curiosity.
 
 Job posting:
 ${jobText}`,
@@ -75,15 +88,11 @@ ${jobText}`,
   });
 
   const content = response.content[0];
-  if (content.type !== "text") {
-    throw new Error("Claude returned non-text response");
-  }
+  if (content.type !== "text") throw new Error("Claude returned non-text response");
 
   let jsonStr = content.text;
   const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonStr = jsonMatch[1];
-  }
+  if (jsonMatch) jsonStr = jsonMatch[1];
 
   const parsed = JSON.parse(jsonStr.trim());
 
@@ -111,5 +120,35 @@ ${jobText}`,
     professionalismScore: Math.max(0, Math.min(100, Math.round(parsed.professionalismScore || 50))),
     writingQualityNotes: Array.isArray(parsed.writingQualityNotes) ? parsed.writingQualityNotes : [],
     overallAssessment: parsed.overallAssessment || "",
+    needsMoreInfo: !!parsed.needsMoreInfo,
+    followUpQuery: typeof parsed.followUpQuery === "string" ? parsed.followUpQuery : undefined,
   };
+}
+
+function buildContextSection(
+  companyContext?: PerplexityVerification,
+  extraContext?: PerplexityVerification
+): string {
+  const parts: string[] = [];
+
+  if (companyContext) {
+    parts.push(`Company exists: ${companyContext.companyExists}`);
+    parts.push(`Company verified: ${companyContext.companyVerified}`);
+    parts.push(`Web presence score: ${companyContext.webPresenceScore}/100`);
+    parts.push(`Industry match: ${companyContext.industryMatch}`);
+    if (companyContext.companySummary) parts.push(`Summary: ${companyContext.companySummary}`);
+    if (companyContext.verificationFlags.length > 0) {
+      parts.push(`Verification flags: ${companyContext.verificationFlags.map(f => `[${f.severity}] ${f.message}`).join("; ")}`);
+    }
+  }
+
+  if (extraContext) {
+    parts.push(`\nFollow-up research findings:`);
+    if (extraContext.companySummary) parts.push(`  ${extraContext.companySummary}`);
+    if (extraContext.verificationFlags.length > 0) {
+      parts.push(`  Additional flags: ${extraContext.verificationFlags.map(f => `[${f.severity}] ${f.message}`).join("; ")}`);
+    }
+  }
+
+  return parts.join("\n");
 }

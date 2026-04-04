@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import type { AnalysisResult, RedFlag, RedFlagSeverity } from "@shared/schema";
+import type { PerplexityVerification } from "./perplexityAI";
+import type { ClaudeLanguageAnalysis } from "./claudeAI";
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -13,14 +15,19 @@ function getRiskLevel(score: number): AnalysisResult["riskLevel"] {
   return "low";
 }
 
-export async function analyzeJobWithAI(jobData: {
-  title: string;
-  company: string;
-  description: string;
-  salary?: number;
-  requirements?: string;
-  contactEmail?: string;
-}): Promise<AnalysisResult> {
+export async function analyzeJobWithAI(
+  jobData: {
+    title: string;
+    company: string;
+    description: string;
+    salary?: number;
+    requirements?: string;
+    contactEmail?: string;
+  },
+  companyContext?: PerplexityVerification,
+  extraContext?: PerplexityVerification,
+  languageAnalysis?: ClaudeLanguageAnalysis
+): Promise<AnalysisResult> {
   const jobText = [
     `Job Title: ${jobData.title}`,
     `Company: ${jobData.company}`,
@@ -32,27 +39,30 @@ export async function analyzeJobWithAI(jobData: {
     .filter(Boolean)
     .join("\n");
 
+  const contextBlock = buildContextBlock(companyContext, extraContext, languageAnalysis);
+
   const response = await openai.chat.completions.create({
     model: "gpt-5-mini",
     messages: [
       {
         role: "system",
-        content: `You are an expert job market analyst specializing in detecting ghost jobs, scam postings, and misleading listings. Analyze job postings and return a structured JSON assessment.
+        content: `You are an expert job market analyst specializing in detecting ghost jobs, scam postings, and misleading listings.
 
 A "ghost job" is a listing posted without genuine intent to hire — used for data harvesting, benchmarking, or maintaining appearances.
 
-Evaluate these dimensions:
-1. Content quality: vague descriptions, unrealistic promises, payment requests, MLM indicators
-2. Company legitimacy: generic names, missing info, mismatched domains
-3. Posting patterns: urgency tactics, evergreen listings, talent pool language
-4. Communication: suspicious emails, excessive data requests, unusual contact methods
+You are the FINAL SCORING step in a multi-model analysis pipeline. You have been given:
+1. The raw job posting
+2. Company intelligence gathered from live web searches (Perplexity)
+3. Linguistic analysis performed by a language model (Claude)
+
+Use ALL of this context to produce a final, well-calibrated risk score. Do not re-derive findings already established — synthesize them into a verdict.
 
 Return ONLY valid JSON matching this exact schema:
 {
   "ghostScore": <number 0-100, higher = more suspicious>,
-  "confidence": <number 0-100, how confident you are>,
+  "confidence": <number 0-100, how confident you are — higher if company context was confirmed>,
   "riskLevel": <"low" | "low-medium" | "medium" | "high">,
-  "recommendation": <string, 1-2 sentence actionable advice>,
+  "recommendation": <string, 1-2 sentence actionable advice for the job seeker>,
   "redFlags": [
     {
       "severity": <"critical" | "high" | "medium" | "low">,
@@ -68,20 +78,21 @@ Return ONLY valid JSON matching this exact schema:
   }
 }
 
-Be thorough but fair. Not every imperfect posting is a scam. Consider industry norms.`,
+Be thorough but fair. A well-established, verified company can still post a ghost job. An unverified company posting vague descriptions is a much stronger signal. Weight the combination of signals, not each in isolation.`,
       },
       {
         role: "user",
-        content: jobText,
+        content: `JOB POSTING:
+${jobText}
+
+${contextBlock}`,
       },
     ],
     response_format: { type: "json_object" },
   });
 
   const content = response.choices[0]?.message?.content;
-  if (!content) {
-    throw new Error("AI returned empty response");
-  }
+  if (!content) throw new Error("AI returned empty response");
 
   const parsed = JSON.parse(content);
 
@@ -103,7 +114,6 @@ Be thorough but fair. Not every imperfect posting is a scam. Consider industry n
     }));
 
   const ghostScore = Math.max(0, Math.min(100, Math.round(parsed.ghostScore || 0)));
-
   const da = parsed.detailedAnalysis || {};
 
   return {
@@ -131,4 +141,50 @@ Be thorough but fair. Not every imperfect posting is a scam. Consider industry n
       },
     },
   };
+}
+
+function buildContextBlock(
+  companyContext?: PerplexityVerification,
+  extraContext?: PerplexityVerification,
+  languageAnalysis?: ClaudeLanguageAnalysis
+): string {
+  const parts: string[] = [];
+
+  if (companyContext) {
+    parts.push("COMPANY INTELLIGENCE (Perplexity web search):");
+    parts.push(`  Exists: ${companyContext.companyExists}`);
+    parts.push(`  Verified: ${companyContext.companyVerified}`);
+    parts.push(`  Web presence score: ${companyContext.webPresenceScore}/100`);
+    parts.push(`  Industry match: ${companyContext.industryMatch}`);
+    if (companyContext.companySummary) parts.push(`  Summary: ${companyContext.companySummary}`);
+    if (companyContext.verificationFlags.length > 0) {
+      parts.push(`  Flags: ${companyContext.verificationFlags.map(f => `[${f.severity}] ${f.message}`).join("; ")}`);
+    }
+    if (companyContext.sources.length > 0) {
+      parts.push(`  Sources: ${companyContext.sources.slice(0, 3).join(", ")}`);
+    }
+  }
+
+  if (extraContext) {
+    parts.push("\nFOLLOW-UP INTELLIGENCE (targeted Perplexity search):");
+    if (extraContext.companySummary) parts.push(`  ${extraContext.companySummary}`);
+    if (extraContext.verificationFlags.length > 0) {
+      parts.push(`  Additional flags: ${extraContext.verificationFlags.map(f => `[${f.severity}] ${f.message}`).join("; ")}`);
+    }
+  }
+
+  if (languageAnalysis) {
+    parts.push("\nLANGUAGE ANALYSIS (Claude):");
+    parts.push(`  Manipulative language: ${languageAnalysis.manipulativeLanguage}`);
+    parts.push(`  Vagueness score: ${languageAnalysis.vaguenesScore}/100`);
+    parts.push(`  Professionalism score: ${languageAnalysis.professionalismScore}/100`);
+    if (languageAnalysis.overallAssessment) {
+      parts.push(`  Assessment: ${languageAnalysis.overallAssessment}`);
+    }
+    if (languageAnalysis.toneFlags.length > 0) {
+      parts.push(`  Language flags: ${languageAnalysis.toneFlags.map(f => `[${f.severity}] ${f.message}`).join("; ")}`);
+    }
+  }
+
+  return parts.join("\n");
 }
