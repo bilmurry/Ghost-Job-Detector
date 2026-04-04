@@ -470,6 +470,17 @@ function getScoreColor(score) {
   return { bg: "#10B981", text: "#FFFFFF", label: "Low Risk" };
 }
 
+function restoreFabIcon(btn, iconUrl) {
+  while (btn.firstChild) btn.removeChild(btn.firstChild);
+  const img = document.createElement("img");
+  img.src = iconUrl;
+  img.width = 34;
+  img.height = 34;
+  img.alt = "Ghost";
+  img.style.cssText = "border-radius:50%;object-fit:contain;image-rendering:-webkit-optimize-contrast;";
+  btn.appendChild(img);
+}
+
 function createFloatingGhostButton() {
   if (document.getElementById("ghost-hunter-fab")) return;
 
@@ -903,7 +914,7 @@ function createFloatingGhostButton() {
     if (!jobData.title && !jobData.company && !jobData.description) {
       ghostButtonState = "idle";
       btn.classList.remove("scanning");
-      btn.innerHTML = ghostImg;
+      restoreFabIcon(btn, fabIconUrl);
       tooltip.textContent = "No job data found on this page";
       tooltip.classList.add("visible");
       setTimeout(() => tooltip.classList.remove("visible"), 3000);
@@ -922,7 +933,7 @@ function createFloatingGhostButton() {
         if (!response || response.error) {
           ghostButtonState = "idle";
           btn.classList.remove("scanning");
-          btn.innerHTML = ghostImg;
+          restoreFabIcon(btn, fabIconUrl);
           tooltip.textContent = response?.error || "Analysis failed";
           tooltip.classList.add("visible");
           setTimeout(() => tooltip.classList.remove("visible"), 4000);
@@ -941,13 +952,13 @@ function createFloatingGhostButton() {
         btn.style.color = scoreInfo.text;
         btn.innerHTML = `<span style="font-size:16px;font-weight:700;line-height:1;">${result.ghostScore}</span>`;
 
-        showFabResult(result, container, btn, ghostImg);
+        showFabResult(result, container, btn, fabIconUrl);
       }
     );
   });
 }
 
-function showFabResult(result, container, btn, ghostImg) {
+function showFabResult(result, container, btn, fabIconUrl) {
   const existing = document.getElementById("ghost-fab-result");
   if (existing) existing.remove();
 
@@ -967,7 +978,7 @@ function showFabResult(result, container, btn, ghostImg) {
     btn.style.background = "#111418";
     btn.style.color = "#0D9488";
     btn.classList.remove("scored");
-    btn.innerHTML = ghostImg;
+    restoreFabIcon(btn, fabIconUrl);
   });
   panel.appendChild(closeBtn);
 
@@ -1165,7 +1176,7 @@ function showFabResult(result, container, btn, ghostImg) {
     btn.style.background = "#111418";
     btn.style.color = "#0D9488";
     btn.classList.remove("scored");
-    btn.innerHTML = ghostImg;
+    restoreFabIcon(btn, fabIconUrl);
   });
 
   const rescanBtn = document.createElement("button");
@@ -1178,7 +1189,7 @@ function showFabResult(result, container, btn, ghostImg) {
     btn.style.background = "#111418";
     btn.style.color = "#0D9488";
     btn.classList.remove("scored");
-    btn.innerHTML = ghostImg;
+    restoreFabIcon(btn, fabIconUrl);
     btn.click();
   });
 
