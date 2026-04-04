@@ -950,7 +950,10 @@ function createFloatingGhostButton() {
         btn.classList.add("scored");
         btn.style.background = scoreInfo.bg;
         btn.style.color = scoreInfo.text;
-        btn.innerHTML = `<span style="font-size:16px;font-weight:700;line-height:1;">${result.ghostScore}</span>`;
+        const scoreSpan = document.createElement("span");
+        scoreSpan.style.cssText = "font-size:16px;font-weight:700;line-height:1;";
+        scoreSpan.textContent = result.ghostScore;
+        btn.replaceChildren(scoreSpan);
 
         showFabResult(result, container, btn, fabIconUrl);
       }
