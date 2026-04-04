@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { execSync } from "child_process";
+import archiver from "archiver";
 import path from "path";
 import {
   jobPostingSchema,
@@ -1058,15 +1058,20 @@ export async function registerRoutes(
   });
 
   app.get("/api/download-extension", (_req, res) => {
-    try {
-      const extensionDir = path.resolve(process.cwd(), "extension");
-      const zipPath = "/tmp/ghost-hunter-extension.zip";
-      execSync(`cd "${extensionDir}" && zip -r "${zipPath}" .`, { stdio: "pipe" });
-      res.download(zipPath, "ghost-hunter-extension.zip");
-    } catch (error) {
-      console.error("Extension archive error:", error);
-      res.status(500).json({ error: "Failed to create extension archive" });
-    }
+    const extensionDir = path.resolve(process.cwd(), "extension");
+    const archive = archiver("zip", { zlib: { level: 9 } });
+
+    archive.on("error", (err) => {
+      console.error("Extension archive error:", err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Failed to create extension archive" });
+      }
+    });
+
+    res.attachment("ghost-hunter-extension.zip");
+    archive.pipe(res);
+    archive.directory(extensionDir, false);
+    archive.finalize();
   });
 
   return httpServer;
