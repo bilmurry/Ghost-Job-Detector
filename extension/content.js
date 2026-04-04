@@ -791,12 +791,17 @@ function createFloatingGhostButton() {
   document.head.appendChild(style);
 
   const fabIconUrl = chrome.runtime.getURL("icons/fab-icon.png");
-  const ghostImg = `<img src="${fabIconUrl}" width="34" height="34" alt="Ghost" style="border-radius:50%;object-fit:contain;image-rendering:-webkit-optimize-contrast;" />`;
+  const fabImg = document.createElement("img");
+  fabImg.src = fabIconUrl;
+  fabImg.width = 34;
+  fabImg.height = 34;
+  fabImg.alt = "Ghost";
+  fabImg.style.cssText = "border-radius:50%;object-fit:contain;image-rendering:-webkit-optimize-contrast;";
 
   const btn = document.createElement("button");
   btn.id = "ghost-fab-btn";
   btn.setAttribute("data-testid", "ghost-fab-btn");
-  btn.innerHTML = ghostImg;
+  btn.appendChild(fabImg);
 
   const tooltip = document.createElement("div");
   tooltip.id = "ghost-fab-tooltip";
