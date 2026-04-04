@@ -81,14 +81,9 @@ function renderRepostSection(repostData) {
     const alert = document.createElement("div");
     alert.className = "repost-alert";
     alert.setAttribute("data-testid", "repost-alert");
-    alert.innerHTML = `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-      Repost detected (seen ${repostData.repostCount} time${repostData.repostCount !== 1 ? "s" : ""})
-    `;
+    alert.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    const repostCount = Number(repostData.repostCount) || 0;
+    alert.appendChild(document.createTextNode(` Repost detected (seen ${repostCount} time${repostCount !== 1 ? "s" : ""})`));
     repostContent.appendChild(alert);
   }
 
@@ -96,13 +91,18 @@ function renderRepostSection(repostData) {
   meta.className = "repost-meta";
   meta.setAttribute("data-testid", "repost-meta");
 
-  let metaHtml = "";
   if (repostData.firstSeen) {
     const date = new Date(repostData.firstSeen);
-    metaHtml += `First seen: <span>${date.toLocaleDateString()}</span><br/>`;
+    meta.appendChild(document.createTextNode("First seen: "));
+    const firstSeenValue = document.createElement("span");
+    firstSeenValue.textContent = date.toLocaleDateString();
+    meta.appendChild(firstSeenValue);
+    meta.appendChild(document.createElement("br"));
   }
-  metaHtml += `Times listed: <span>${repostData.repostCount || 0}</span>`;
-  meta.innerHTML = metaHtml;
+  meta.appendChild(document.createTextNode("Times listed: "));
+  const timesListedValue = document.createElement("span");
+  timesListedValue.textContent = String(Number(repostData.repostCount) || 0);
+  meta.appendChild(timesListedValue);
   repostContent.appendChild(meta);
 
   if (repostData.sites && repostData.sites.length > 0) {
