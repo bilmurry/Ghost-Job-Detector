@@ -1,0 +1,87 @@
+async function extractWithRetry(maxAttempts = 5, delayMs = 800) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const data = extractJobData();
+    if (data.description && data.description.length > 100) return data;
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  return extractJobData();
+}
+
+btn.addEventListener("click", async (e) => {
+  if (wasDragged) {
+    wasDragged = false;
+    return;
+  }
+  if (ghostButtonState === "scanning") return;
+
+  const existingResult = document.getElementById("ghost-fab-result");
+  if (existingResult) existingResult.remove();
+
+  ghostButtonState = "scanning";
+  btn.classList.add("scanning");
+  btn.classList.remove("scored");
+  btn.innerHTML = `<div id="ghost-fab-spinner"></div>`;
+  tooltip.textContent = "Analyzing...";
+  tooltip.classList.add("visible");
+
+  // Use retry-based extraction instead of instant extractJobData()
+  const jobData = await extractWithRetry();
+
+  if (!jobData.title && !jobData.company && !jobData.description) {
+    ghostButtonState = "idle";
+    btn.classList.remove("scanning");
+    restoreFabIcon(btn, fabIconUrl);
+    tooltip.textContent = "No job data found on this page";
+    tooltip.classList.add("visible");
+    setTimeout(() => tooltip.classList.remove("visible"), 3000);
+    return;
+  }
+
+  if (!jobData.description || jobData.description.length < 100) {
+    ghostButtonState = "idle";
+    btn.classList.remove("scanning");
+    restoreFabIcon(btn, fabIconUrl);
+    tooltip.textContent = "Scroll down to load the full job description, then try again";
+    tooltip.classList.add("visible");
+    setTimeout(() => tooltip.classList.remove("visible"), 4000);
+    return;
+  }
+
+  if (jobData.description && jobData.description.length > 5000) {
+    jobData.description = jobData.description.substring(0, 5000);
+  }
+
+  chrome.runtime.sendMessage(
+    { type: "SCAN_FROM_FAB", jobData },
+    (response) => {
+      tooltip.classList.remove("visible");
+
+      if (!response || response.error) {
+        ghostButtonState = "idle";
+        btn.classList.remove("scanning");
+        restoreFabIcon(btn, fabIconUrl);
+        tooltip.textContent = response?.error || "Analysis failed";
+        tooltip.classList.add("visible");
+        setTimeout(() => tooltip.classList.remove("visible"), 4000);
+        return;
+      }
+
+      const result = response.data;
+      const score = typeof result.ghostScore === "number" ? Math.max(0, Math.min(100, result.ghostScore)) : 0;
+      result.ghostScore = score;
+      const scoreInfo = getScoreColor(score);
+
+      ghostButtonState = "scored";
+      btn.classList.remove("scanning");
+      btn.classList.add("scored");
+      btn.style.background = scoreInfo.bg;
+      btn.style.color = scoreInfo.text;
+      const scoreSpan = document.createElement("span");
+      scoreSpan.style.cssText = "font-size:16px;font-weight:700;line-height:1;";
+      scoreSpan.textContent = result.ghostScore;
+      btn.replaceChildren(scoreSpan);
+
+      showFabResult(result, container, btn, fabIconUrl);
+    }
+  );
+});

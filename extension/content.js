@@ -892,7 +892,16 @@ function createFloatingGhostButton() {
   document.addEventListener("pointermove", onPointerMove);
   document.addEventListener("pointerup", onPointerUp);
 
-  btn.addEventListener("click", (e) => {
+  async function extractWithRetry(maxAttempts = 5, delayMs = 800) {
+    for (let i = 0; i < maxAttempts; i++) {
+      const data = extractJobData();
+      if (data.description && data.description.length > 100) return data;
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+    return extractJobData();
+  }
+
+  btn.addEventListener("click", async (e) => {
     if (wasDragged) {
       wasDragged = false;
       return;
@@ -905,11 +914,13 @@ function createFloatingGhostButton() {
     ghostButtonState = "scanning";
     btn.classList.add("scanning");
     btn.classList.remove("scored");
-    btn.innerHTML = `<div id="ghost-fab-spinner"></div>`;
+    const spinner = document.createElement("div");
+    spinner.id = "ghost-fab-spinner";
+    btn.replaceChildren(spinner);
     tooltip.textContent = "Analyzing...";
     tooltip.classList.add("visible");
 
-    const jobData = extractJobData();
+    const jobData = await extractWithRetry();
 
     if (!jobData.title && !jobData.company && !jobData.description) {
       ghostButtonState = "idle";
@@ -918,6 +929,16 @@ function createFloatingGhostButton() {
       tooltip.textContent = "No job data found on this page";
       tooltip.classList.add("visible");
       setTimeout(() => tooltip.classList.remove("visible"), 3000);
+      return;
+    }
+
+    if (!jobData.description || jobData.description.length < 100) {
+      ghostButtonState = "idle";
+      btn.classList.remove("scanning");
+      restoreFabIcon(btn, fabIconUrl);
+      tooltip.textContent = "Scroll down to load the full job description, then try again";
+      tooltip.classList.add("visible");
+      setTimeout(() => tooltip.classList.remove("visible"), 4000);
       return;
     }
 
